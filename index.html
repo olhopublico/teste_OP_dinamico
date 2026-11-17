@@ -97,20 +97,23 @@
 </head>
 <body>
     <div class="container">
+        <!-- CABEÇALHO -->
         <header>
             <h1>Pesquisa · Congresso Nacional</h1>
             <h2>“E aí, já cobrou o congresso hoje?”</h2>
         </header>
 
+        <!-- ABAS -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="camara">Câmara dos Deputados</button>
             <button class="tab-btn" data-tab="senado">Senado</button>
         </div>
 
-        <!-- ===== ABA CÂMARA ===== -->
+        <!-- ================= ABA CÂMARA ================= -->
         <div class="tab-content active" id="tab-camara">
             <div id="warning-camara"></div>
 
+            <!-- Bloco 1: Filtros -->
             <div class="block">
                 <div class="block-title">Faça sua pesquisa</div>
                 <div class="filters-row" id="filters-camara">
@@ -123,6 +126,7 @@
                 <button class="clear-btn" id="limpar-camara">Limpar filtros</button>
             </div>
 
+            <!-- Bloco 2: Agregação -->
             <div class="block">
                 <div class="aggregation-row">
                     <div class="agg-field">
@@ -144,6 +148,7 @@
                 </div>
             </div>
 
+            <!-- Bloco 3: Resultado -->
             <div class="block">
                 <div class="result-header">
                     <span class="result-count" id="count-camara">Carregando...</span>
@@ -155,16 +160,17 @@
                 <div class="table-wrapper">
                     <table id="table-camara">
                         <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
-                        <tbody id="tbody-camara"><tr><td colspan="11" class="loading-msg">Buscando dados da Câmara</td></tr></tbody>
+                        <tbody id="tbody-camara"><tr><td colspan="11" class="loading-msg">Buscando dados da Câmara via backend</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ===== ABA SENADO ===== -->
+        <!-- ================= ABA SENADO ================= -->
         <div class="tab-content" id="tab-senado">
             <div id="warning-senado"></div>
 
+            <!-- Bloco 1: Filtros -->
             <div class="block">
                 <div class="block-title">Faça sua pesquisa</div>
                 <div class="filters-row" id="filters-senado">
@@ -177,6 +183,7 @@
                 <button class="clear-btn" id="limpar-senado">Limpar filtros</button>
             </div>
 
+            <!-- Bloco 2: Agregação -->
             <div class="block">
                 <div class="aggregation-row">
                     <div class="agg-field">
@@ -198,6 +205,7 @@
                 </div>
             </div>
 
+            <!-- Bloco 3: Resultado -->
             <div class="block">
                 <div class="result-header">
                     <span class="result-count" id="count-senado">Carregando...</span>
@@ -209,12 +217,13 @@
                 <div class="table-wrapper">
                     <table id="table-senado">
                         <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
-                        <tbody id="tbody-senado"><tr><td colspan="11" class="loading-msg">Buscando dados do Senado</td></tr></tbody>
+                        <tbody id="tbody-senado"><tr><td colspan="11" class="loading-msg">Buscando dados do Senado via backend</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- RODAPÉ -->
         <footer>
             <div class="footer-left">
                 <strong>Legenda:</strong><br>* Suplente. Assume mandato em 2027<br>** Aguardando decisão do TSE<br>
@@ -226,11 +235,16 @@
 
     <script>
         // ============================================================
+        // CONFIGURAÇÃO DO BACKEND
+        // Altere esta constante para o endereço onde o FastAPI está rodando
+        // ============================================================
+        const API_BASE = 'http://localhost:8000';
+
+        // ============================================================
         // ESTADO GLOBAL
         // ============================================================
         let camaraData = [];
         let senadoData = [];
-        let redesTSE = {};  // { "NOME NORMALIZADO": { instagram, facebook, tiktok, whatsapp } }
         const UFs = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
         // ============================================================
@@ -242,166 +256,41 @@
             return resp.json();
         }
 
-        // Normaliza nome para matching (equivalente ao Python do script)
-        function normalizarNome(nome) {
-            if (!nome) return '';
-            return nome
-                .toUpperCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .trim();
-        }
-
         // ============================================================
-        // CARREGAR REDES SOCIAIS DO TSE (JSON local)
-        // ============================================================
-        async function carregarRedesTSE() {
-            try {
-                const resp = await fetch('data/redes_sociais.json');
-                if (!resp.ok) throw new Error('JSON não encontrado');
-                redesTSE = await resp.json();
-                console.log(`Redes TSE carregadas: ${Object.keys(redesTSE).length} entradas`);
-            } catch (err) {
-                console.warn('Redes sociais do TSE não disponíveis:', err.message);
-                redesTSE = {};
-                // Exibe aviso discreto nas duas abas
-                document.getElementById('warning-camara').innerHTML =
-                    '<div class="warning-msg">⚠️ Dados de redes sociais do TSE não carregados. Exibindo apenas o que as APIs legislativas retornam.</div>';
-                document.getElementById('warning-senado').innerHTML =
-                    '<div class="warning-msg">⚠️ Dados de redes sociais do TSE não carregados. Exibindo apenas o que as APIs legislativas retornam.</div>';
-            }
-        }
-
-        // ============================================================
-        // MESCLAR REDES DO TSE COM DADOS LEGISLATIVOS
-        // ============================================================
-        function mesclarRedes(parlamentar) {
-            const chave = normalizarNome(parlamentar.nome);
-            const redes = redesTSE[chave];
-            if (!redes) return parlamentar;
-
-            return {
-                ...parlamentar,
-                instagram: parlamentar.instagram || redes.instagram || '',
-                facebook:  parlamentar.facebook  || redes.facebook  || '',
-                tiktok:    parlamentar.tiktok    || redes.tiktok    || '',
-                whatsapp:  parlamentar.whatsapp  || redes.whatsapp  || '',
-            };
-        }
-
-        // ============================================================
-        // CARREGAR DEPUTADOS (API DA CÂMARA)
+        // CARREGAR DEPUTADOS (via backend)
+        // O backend já faz a paginação e o merge com o TSE
         // ============================================================
         async function carregarCamara() {
             const tbody = document.getElementById('tbody-camara');
             const countEl = document.getElementById('count-camara');
             try {
-                const data = await fetchJSON('https://dadosabertos.camara.leg.br/api/v2/deputados?ordem=ASC&ordenarPor=nome&itens=100');
-                const lista = data.dados || [];
-
-                const detalhes = await Promise.all(
-                    lista.map(async (d) => {
-                        try {
-                            const det = await fetchJSON(`https://dadosabertos.camara.leg.br/api/v2/deputados/${d.id}`);
-                            const info = det.dados || {};
-                            const gab = info.gabinete || {};
-                            const redesApi = info.rede_social || [];
-
-                            const getRede = (dominio) => {
-                                const link = redesApi.find(u => u.includes(dominio));
-                                if (!link) return '';
-                                if (dominio === 'instagram.com' || dominio === 'facebook.com' || dominio === 'tiktok.com') {
-                                    const parts = link.split('/').filter(Boolean);
-                                    return '@' + parts[parts.length - 1].replace('@','');
-                                }
-                                return link;
-                            };
-
-                            return mesclarRedes({
-                                id: d.id,
-                                nome: d.nome,
-                                partido: d.siglaPartido,
-                                estado: d.siglaUf,
-                                foto: d.urlFoto || '',
-                                siteOficial: `https://www.camara.leg.br/deputados/${d.id}`,
-                                instagram: getRede('instagram.com'),
-                                facebook: getRede('facebook.com'),
-                                tiktok: getRede('tiktok.com'),
-                                whatsapp: '',
-                                site: '',
-                                telefone: gab.telefone || '',
-                                email: info.email || '',
-                                mandato2026: true,
-                                suplente: false
-                            });
-                        } catch {
-                            return mesclarRedes({
-                                id: d.id, nome: d.nome, partido: d.siglaPartido, estado: d.siglaUf,
-                                foto: d.urlFoto || '', siteOficial: `https://www.camara.leg.br/deputados/${d.id}`,
-                                instagram: '', facebook: '', tiktok: '', whatsapp: '', site: '',
-                                telefone: '', email: '', mandato2026: true, suplente: false
-                            });
-                        }
-                    })
-                );
-
-                camaraData = detalhes;
+                const data = await fetchJSON(`${API_BASE}/api/deputados`);
+                camaraData = data || [];
                 countEl.textContent = `${camaraData.length} de ${camaraData.length}`;
                 popularFiltros('camara');
                 renderTable('camara');
             } catch (err) {
                 console.error('Erro Câmara:', err);
-                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados da Câmara. Verifique sua conexão ou tente novamente mais tarde. (${err.message})</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados da Câmara. Verifique se o backend está rodando em ${API_BASE}. (${err.message})</td></tr>`;
                 countEl.textContent = 'Erro';
             }
         }
 
         // ============================================================
-        // CARREGAR SENADORES (API DO SENADO)
+        // CARREGAR SENADORES (via backend)
         // ============================================================
         async function carregarSenado() {
             const tbody = document.getElementById('tbody-senado');
             const countEl = document.getElementById('count-senado');
             try {
-                const data = await fetchJSON('https://legis.senado.leg.br/dadosabertos/senador/lista/atual');
-                const parlamentares = data?.ListaParlamentarEmExercicio?.Parlamentares?.Parlamentar || [];
-                const lista = Array.isArray(parlamentares) ? parlamentares : [parlamentares];
-
-                const detalhes = await Promise.all(
-                    lista.map(async (p) => {
-                        const id = p.IdentificacaoParlamentar?.CodigoParlamentar;
-                        const nome = p.IdentificacaoParlamentar?.NomeParlamentar || '';
-                        const partido = p.IdentificacaoParlamentar?.SiglaPartidoParlamentar || '';
-                        const estado = p.IdentificacaoParlamentar?.UfParlamentar || '';
-                        const foto = p.IdentificacaoParlamentar?.UrlFotoParlamentar || '';
-                        const email = p.IdentificacaoParlamentar?.EmailParlamentar || '';
-
-                        let telefone = '';
-                        if (id) {
-                            try {
-                                const det = await fetchJSON(`https://legis.senado.leg.br/dadosabertos/senador/${id}`);
-                                const detInfo = det?.DetalheParlamentar?.Parlamentar;
-                                telefone = detInfo?.TelefoneParlamentar || '';
-                            } catch { /* ignora */ }
-                        }
-
-                        return mesclarRedes({
-                            id: id, nome, partido, estado, foto,
-                            siteOficial: id ? `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}` : '',
-                            instagram: '', facebook: '', tiktok: '', whatsapp: '', site: '',
-                            telefone, email,
-                            mandato2026: true, suplente: false
-                        });
-                    })
-                );
-
-                senadoData = detalhes;
+                const data = await fetchJSON(`${API_BASE}/api/senadores`);
+                senadoData = data || [];
                 countEl.textContent = `${senadoData.length} de ${senadoData.length}`;
                 popularFiltros('senado');
                 renderTable('senado');
             } catch (err) {
                 console.error('Erro Senado:', err);
-                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados do Senado. A API pode estar indisponível ou bloqueando requisições do navegador (CORS). (${err.message})</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados do Senado. Verifique se o backend está rodando em ${API_BASE}. (${err.message})</td></tr>`;
                 countEl.textContent = 'Erro';
             }
         }
@@ -571,7 +460,7 @@
         }
 
         // ============================================================
-        // EXPORTAR
+        // EXPORTAR CSV
         // ============================================================
         function exportCSV(prefix) {
             const filtered = getFilteredData(prefix);
@@ -607,12 +496,12 @@
         // ============================================================
         // INICIALIZAÇÃO
         // ============================================================
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             setupFilterEvents('camara');
             setupFilterEvents('senado');
             initVisitCounter();
 
-            // Abas
+            // Controle de abas
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -622,10 +511,7 @@
                 });
             });
 
-            // 1. Carrega redes sociais do TSE (não bloqueia se falhar)
-            await carregarRedesTSE();
-
-            // 2. Carrega dados dos parlamentares
+            // Dispara as chamadas ao backend (que já resolve CORS, paginação e TSE)
             carregarCamara();
             carregarSenado();
         });
