@@ -22,7 +22,7 @@ async def buscar_todos_deputados():
     return todos
 
 async def buscar_detalhes_lote(lista_basica):
-    """Busca detalhes (email, telefone, redes) para cada deputado."""
+    """Busca detalhes (email, telefone, redes) para cada deputado, em lotes de 20."""
     async with httpx.AsyncClient() as client:
         async def fetch_one(dep):
             try:
@@ -44,21 +44,20 @@ async def buscar_detalhes_lote(lista_basica):
                     "whatsapp": "", "site": "",
                     "mandato2026": True, "suplente": False
                 }
-            except:
-                # Fallback se o detalhe falhar
-                return {**dep, "email": "", "telefone": "", "instagram": "", "facebook": "", "tiktok": "", "whatsapp": "", "site": ""}
-        
-        # Executa em lotes para não sobrecarregar a API
+            except Exception:
+                return {
+                    "id": dep['id'], "nome": dep['nome'],
+                    "partido": dep['siglaPartido'], "estado": dep['siglaUf'],
+                    "foto": dep.get('urlFoto', ''),
+                    "siteOficial": f"https://www.camara.leg.br/deputados/{dep['id']}",
+                    "telefone": "", "email": "",
+                    "instagram": "", "facebook": "", "tiktok": "",
+                    "whatsapp": "", "site": "",
+                    "mandato2026": True, "suplente": False
+                }
+
         resultados = []
         for i in range(0, len(lista_basica), 20):
             lote = lista_basica[i:i+20]
             resultados.extend(await asyncio.gather(*[fetch_one(d) for d in lote]))
         return resultados
-
-def extrair_rede(redes, tipo):
-    """Extrai o @handle de uma URL de rede social."""
-    for url in redes:
-        if tipo in url:
-            parts = url.strip('/').split('/')
-            return '@' + parts[-1].replace('@', '')
-    return ""
