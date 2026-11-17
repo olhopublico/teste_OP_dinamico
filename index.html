@@ -1,520 +1,695 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesquisa · Congresso Nacional</title>
-    <meta name="description" content="Pesquise contatos de deputados federais e senadores. Dados públicos para participação popular.">
-    <meta name="keywords" content="deputados federais, senadores, redes sociais, Congresso Nacional, dados abertos, participação popular">
-    <style>
-        /* ===== RESET E VARIÁVEIS ===== */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        :root {
-            --bg: #f0f7ff; --surface: #ffffff; --text: #1e293b; --text-muted: #64748b;
-            --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe;
-            --border: #cbd5e1; --shadow: 0 2px 12px rgba(59,130,246,0.08); --radius: 12px;
-        }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; line-height: 1.5; }
-        .container { max-width: 1300px; margin: 0 auto; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* ===== CABEÇALHO ===== */
-        header { background: var(--surface); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        header h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
-        header h2 { font-size: 1rem; font-weight: 400; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+<!-- ===== TAGS DE BUSCA (SEO) ===== -->
+<meta name="description" content="Pesquise deputados federais e senadores do Brasil. Encontre contatos, redes sociais (Instagram, X, Facebook, TikTok, WhatsApp), e-mails e telefones de gabinete de parlamentares. Dados públicos para participação popular.">
+<meta name="keywords" content="deputados federais, senadores, congresso nacional, câmara dos deputados, senado federal, parlamentares, políticos brasileiros, contato de deputados, e-mail de deputados, telefone de gabinete, redes sociais de políticos, instagram de deputados, quem são os deputados, deputado federal por estado, senador por estado, partidos políticos, pesquisa de parlamentares, dados públicos, participação popular, cobrar políticos, representantes eleitos, política brasileira, eleições 2026, mandato 2026">
+<meta property="og:title" content="Pesquisa · Congresso Nacional — Deputados e Senadores">
+<meta property="og:description" content="Encontre contatos, redes sociais e e-mails de deputados federais e senadores do Brasil. Ferramenta de participação popular.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Pesquisa · Congresso Nacional">
+<meta name="twitter:description" content="Pesquise deputados e senadores: contatos, redes sociais e e-mails para cobrar seus representantes.">
+<meta name="author" content="Pesquisa Congresso Nacional">
+<meta name="robots" content="index, follow">
 
-        /* ===== ABAS ===== */
-        .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: var(--surface); border-radius: var(--radius); padding: 6px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .tab-btn { flex: 1; padding: 14px 24px; border: none; background: transparent; color: var(--text-muted); font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-        .tab-btn:hover { background: var(--primary-light); color: var(--primary); }
-        .tab-btn.active { background: var(--primary); color: #fff; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+<title>Pesquisa · Congresso Nacional</title>
+<style>
+/* ============================================================
+   1. RESET E VARIÁVEIS GLOBAIS
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* ===== BLOCOS ===== */
-        .block { background: var(--surface); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .block-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 16px; }
+:root {
+  --cor-fundo: #eef3f8;
+  --cor-superficie: #ffffff;
+  --cor-borda: #d4dfeb;
+  --cor-texto: #1f2d3d;
+  --cor-texto-suave: #5a6b7d;
+  --cor-destaque: #3b6fa8;
+  --cor-destaque-escuro: #2c5580;
+  --cor-hover: #e1ebf5;
+  --sombra: 0 1px 3px rgba(31,45,61,.06), 0 4px 12px rgba(31,45,61,.04);
+  --raio: 10px;
+  --fonte: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
 
-        /* ===== FILTROS ===== */
-        .filters-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-        .filter-group { flex: 1; min-width: 140px; }
-        .filter-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
-        .filter-group input, .filter-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none; }
-        .filter-group input:focus, .filter-group select:focus { border-color: var(--primary); }
-        .filter-group select[multiple] { height: 80px; }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; min-width: 160px; }
-        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
-        .clear-btn { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; margin-top: 8px; }
-        .clear-btn:hover { color: var(--primary); }
+html { font-size: 16px; }
+body {
+  font-family: var(--fonte);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-        /* ===== AGREGAÇÃO ===== */
-        .aggregation-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .aggregation-row { grid-template-columns: 1fr; } }
-        .agg-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
-        .agg-textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-family: monospace; background: var(--bg); color: var(--text); resize: vertical; }
-        .copy-btn { margin-top: 8px; padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
-        .copy-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-        .social-checkboxes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-        .social-checkboxes label { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; cursor: pointer; }
+/* ============================================================
+   2. CABEÇALHO
+   ============================================================ */
+.cabecalho {
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 1.5rem 1rem 1.2rem;
+  text-align: center;
+}
+.cabecalho__titulo {
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--cor-destaque-escuro);
+}
+.cabecalho__subtitulo {
+  font-size: clamp(.8rem, 2.5vw, 1rem);
+  color: var(--cor-texto-suave);
+  font-style: italic;
+  margin-top: .25rem;
+}
 
-        /* ===== RESULTADO ===== */
-        .result-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-        .result-count { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-        .export-btns { display: flex; gap: 8px; }
-        .export-btn { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-        .export-btn:hover { background: var(--primary-hover); }
-        .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; max-height: 420px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 1100px; }
-        thead { position: sticky; top: 0; z-index: 2; }
-        th { background: var(--primary-light); color: var(--primary); padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; border-bottom: 2px solid var(--primary); }
-        td { padding: 8px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-        tr:hover td { background: var(--bg); }
-        .foto-cell img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
-        .name-link { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .name-link:hover { text-decoration: underline; }
-        .suplente-badge { font-size: 0.65rem; color: var(--text-muted); margin-left: 2px; }
-        .social-icon { font-size: 0.7rem; color: var(--primary); text-decoration: none; }
-        .social-icon:hover { text-decoration: underline; }
-        .empty-result { text-align: center; padding: 40px; color: var(--text-muted); font-style: italic; }
-        .loading-msg { text-align: center; padding: 40px; color: var(--primary); font-weight: 600; }
-        .loading-msg::after { content: '...'; animation: dots 1s steps(4, end) infinite; }
-        @keyframes dots { 0%,20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%,100% { content: '...'; } }
-        .error-msg { text-align: center; padding: 20px; color: #dc2626; background: #fef2f2; border-radius: 8px; }
-        .warning-msg { text-align: center; padding: 12px; color: #d97706; background: #fffbeb; border-radius: 8px; margin-bottom: 12px; font-size: 0.8rem; }
+/* ============================================================
+   3. MENU EM ABAS
+   ============================================================ */
+.menu-abas {
+  display: flex;
+  background: var(--cor-superficie);
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 0 1rem;
+  gap: .25rem;
+  overflow-x: auto;
+}
+.menu-abas__botao {
+  background: none; border: none;
+  padding: 1rem 1.2rem;
+  font-size: .95rem; font-family: inherit;
+  color: var(--cor-texto-suave);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.menu-abas__botao:hover { background: var(--cor-hover); color: var(--cor-texto); }
+.menu-abas__botao--ativo {
+  color: var(--cor-destaque-escuro);
+  border-bottom-color: var(--cor-destaque);
+  font-weight: 600;
+}
 
-        /* ===== RODAPÉ ===== */
-        footer { background: var(--surface); border-radius: var(--radius); padding: 24px 28px; margin-top: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
-        .footer-left { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
-        .footer-left strong { color: var(--text); }
-        .footer-right { text-align: right; font-size: 0.75rem; color: var(--text-muted); }
-        .visit-counter { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; opacity: 0.7; }
+/* ============================================================
+   4. CONTEÚDO E PAINÉIS
+   ============================================================ */
+.conteudo {
+  flex: 1;
+  max-width: 1400px; width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+.painel { display: none; }
+.painel--ativo { display: block; }
 
-        @media (max-width: 600px) {
-            body { padding: 10px; } header h1 { font-size: 1.3rem; } header h2 { font-size: 0.85rem; }
-            .tab-btn { padding: 10px 16px; font-size: 0.85rem; } .block { padding: 16px; }
-            .filter-group { min-width: 100%; } footer { flex-direction: column; align-items: flex-start; } .footer-right { text-align: left; width: 100%; }
-        }
-    </style>
+.bloco {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.bloco__titulo {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--cor-destaque);
+  font-weight: 600;
+  margin-bottom: .9rem;
+}
+
+/* ============================================================
+   5. FILTROS
+   ============================================================ */
+.filtro-grid {
+  display: flex; flex-wrap: wrap;
+  gap: .75rem; align-items: flex-end;
+}
+.campo {
+  display: flex; flex-direction: column;
+  gap: .3rem;
+  flex: 1 1 140px; min-width: 120px;
+}
+.campo--largo { flex: 2 1 200px; }
+.campo label {
+  font-size: .78rem;
+  color: var(--cor-texto-suave);
+  font-weight: 500;
+}
+.campo input[type="text"],
+.campo select {
+  padding: .55rem .65rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-fundo);
+  font-family: inherit;
+  font-size: .9rem;
+  color: var(--cor-texto);
+  transition: border-color .2s, box-shadow .2s;
+}
+.campo input[type="text"]:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--cor-destaque);
+  box-shadow: 0 0 0 3px rgba(59,111,168,.15);
+  background: #fff;
+}
+.campo select[multiple] { min-height: 2.6rem; }
+
+.campo--checkbox {
+  flex: 0 0 auto;
+  flex-direction: row; align-items: center;
+  gap: .45rem; padding-bottom: .55rem;
+  white-space: nowrap;
+}
+.campo--checkbox input[type="checkbox"] {
+  width: 16px; height: 16px;
+  accent-color: var(--cor-destaque);
+  cursor: pointer;
+}
+.campo--checkbox label {
+  font-size: .82rem;
+  color: var(--cor-texto);
+  cursor: pointer;
+}
+
+.filtro-acoes {
+  margin-top: .6rem;
+  display: flex; justify-content: flex-end;
+}
+.btn-limpar {
+  background: none; border: none;
+  color: var(--cor-texto-suave);
+  font-size: .75rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: .2rem .3rem;
+  transition: color .2s;
+}
+.btn-limpar:hover { color: var(--cor-destaque-escuro); }
+
+/* ============================================================
+   6. AGREGAÇÃO
+   ============================================================ */
+.agregacao-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 700px) { .agregacao-grid { grid-template-columns: 1fr; } }
+
+.agregacao-campo { display: flex; flex-direction: column; gap: .5rem; }
+.agregacao-campo__header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .5rem; flex-wrap: wrap;
+}
+.agregacao-campo__titulo {
+  font-size: .85rem; font-weight: 600; color: var(--cor-texto);
+}
+.radios-arroba {
+  display: flex; gap: .6rem; flex-wrap: wrap;
+  font-size: .78rem; color: var(--cor-texto-suave);
+}
+.radios-arroba label { display: flex; align-items: center; gap: .3rem; cursor: pointer; }
+.radios-arroba input[type="radio"] { accent-color: var(--cor-destaque); cursor: pointer; }
+
+.agregacao-campo textarea {
+  width: 100%; min-height: 90px; resize: vertical;
+  padding: .6rem .7rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-fundo);
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: .78rem; line-height: 1.45;
+  color: var(--cor-texto);
+}
+.agregacao-campo textarea:focus {
+  outline: none;
+  border-color: var(--cor-destaque);
+  box-shadow: 0 0 0 3px rgba(59,111,168,.15);
+}
+.btn-copiar {
+  align-self: flex-start;
+  background: var(--cor-hover);
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  padding: .35rem .75rem;
+  font-size: .75rem; font-family: inherit;
+  color: var(--cor-destaque-escuro);
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.btn-copiar:hover { background: #d8e6f3; border-color: var(--cor-destaque); }
+.btn-copiar--copiado { background: #d9e8d9; border-color: #8aab8a; color: #4a6b4a; }
+
+/* ============================================================
+   7. RESULTADO
+   ============================================================ */
+.resultado-barra {
+  display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: space-between;
+  gap: .75rem; margin-bottom: .75rem;
+}
+.resultado-contagem { font-size: .82rem; color: var(--cor-texto-suave); }
+.resultado-contagem strong { color: var(--cor-destaque-escuro); }
+.resultado-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.btn-exportar {
+  background: var(--cor-destaque); color: #fff;
+  border: none; border-radius: 6px;
+  padding: .45rem .9rem;
+  font-size: .78rem; font-family: inherit;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-exportar:hover { background: var(--cor-destaque-escuro); }
+
+.tabela-envelope {
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--cor-superficie);
+}
+.tabela-scroll-topo,
+.tabela-scroll-fundo { overflow-x: auto; overflow-y: hidden; }
+.tabela-scroll-topo { height: 12px; }
+.tabela-scroll-topo::-webkit-scrollbar,
+.tabela-scroll-fundo::-webkit-scrollbar { height: 10px; }
+.tabela-scroll-topo::-webkit-scrollbar-thumb,
+.tabela-scroll-fundo::-webkit-scrollbar-thumb { background: #b8c9da; border-radius: 5px; }
+.tabela-inner { min-width: 100%; }
+
+table.tabela-resultado {
+  border-collapse: collapse;
+  width: 100%; min-width: 1400px;
+  font-size: .8rem;
+}
+table.tabela-resultado thead th {
+  background: var(--cor-fundo);
+  color: var(--cor-destaque-escuro);
+  font-weight: 600; text-align: left;
+  padding: .6rem .7rem;
+  border-bottom: 1px solid var(--cor-borda);
+  position: relative; white-space: nowrap;
+  user-select: none;
+}
+.col-resize {
+  position: absolute; top: 0; right: 0;
+  width: 6px; height: 100%;
+  cursor: col-resize;
+}
+.col-resize:hover { background: rgba(59,111,168,.25); }
+table.tabela-resultado tbody td {
+  padding: .55rem .7rem;
+  border-bottom: 1px solid #eef3f8;
+  color: var(--cor-texto);
+  vertical-align: top;
+  word-break: break-word;
+}
+table.tabela-resultado tbody tr:nth-child(even) { background: #f8fafc; }
+table.tabela-resultado tbody tr:hover { background: var(--cor-hover); }
+table.tabela-resultado a { color: var(--cor-destaque-escuro); text-decoration: none; }
+table.tabela-resultado a:hover { text-decoration: underline; }
+.tabela-vazia {
+  text-align: center; padding: 2rem 1rem;
+  color: var(--cor-texto-suave); font-size: .85rem;
+}
+.tabela-loading {
+  text-align: center; padding: 2rem 1rem;
+  color: var(--cor-destaque); font-size: .85rem; font-weight: 600;
+}
+.tabela-erro {
+  text-align: center; padding: 1.5rem 1rem;
+  color: #b03a2e; background: #fdf0ef; font-size: .85rem;
+}
+.aviso-tse {
+  background: #fff8e1; border: 1px solid #f0d98a;
+  color: #8a6d1a; padding: .6rem .8rem;
+  border-radius: 8px; font-size: .78rem;
+  margin-bottom: 1rem;
+}
+
+/* ============================================================
+   8. RODAPÉ
+   ============================================================ */
+.rodape {
+  background: var(--cor-superficie);
+  border-top: 1px solid var(--cor-borda);
+  padding: 1rem;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+  font-size: .72rem; color: var(--cor-texto-suave); line-height: 1.6;
+}
+.rodape__legenda { max-width: 60%; }
+.rodape__construcao { text-align: right; font-style: italic; }
+@media (max-width: 600px) {
+  .rodape { flex-direction: column; }
+  .rodape__legenda, .rodape__construcao { max-width: 100%; text-align: left; }
+}
+
+/* ============================================================
+   9. RESPONSIVIDADE EXTRA
+   ============================================================ */
+@media (max-width: 600px) {
+  .conteudo { padding: 1rem .6rem 1.5rem; }
+  .bloco { padding: .9rem; }
+  .filtro-grid { gap: .6rem; }
+  .campo, .campo--largo { flex: 1 1 100%; }
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- CABEÇALHO -->
-        <header>
-            <h1>Pesquisa · Congresso Nacional</h1>
-            <h2>“E aí, já cobrou o congresso hoje?”</h2>
-        </header>
 
-        <!-- ABAS -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="camara">Câmara dos Deputados</button>
-            <button class="tab-btn" data-tab="senado">Senado</button>
+<!-- CABEÇALHO -->
+<header class="cabecalho">
+  <h1 class="cabecalho__titulo">Pesquisa · Congresso Nacional</h1>
+  <p class="cabecalho__subtitulo">E aí, já cobrou o congresso hoje?</p>
+</header>
+
+<!-- MENU EM ABAS -->
+<nav class="menu-abas" role="tablist" aria-label="Navegação principal">
+  <button class="menu-abas__botao menu-abas__botao--ativo"
+          role="tab" aria-selected="true" data-aba="deputados">
+    Câmara dos Deputados
+  </button>
+  <button class="menu-abas__botao"
+          role="tab" aria-selected="false" data-aba="senadores">
+    Senado
+  </button>
+</nav>
+
+<!-- CONTEÚDO -->
+<main class="conteudo">
+
+  <!-- Painel: DEPUTADOS -->
+  <section class="painel painel--ativo" id="painel-deputados" role="tabpanel">
+    <div class="aviso-tse" id="aviso-tse-dep" style="display:none;"></div>
+
+    <div class="bloco">
+      <h2 class="bloco__titulo">Faça sua pesquisa</h2>
+      <div class="filtro-grid">
+        <div class="campo campo--largo">
+          <label for="f-nome-dep">Nome</label>
+          <input type="text" id="f-nome-dep" data-filtro="nome" placeholder="Digite um nome...">
         </div>
-
-        <!-- ================= ABA CÂMARA ================= -->
-        <div class="tab-content active" id="tab-camara">
-            <div id="warning-camara"></div>
-
-            <!-- Bloco 1: Filtros -->
-            <div class="block">
-                <div class="block-title">Faça sua pesquisa</div>
-                <div class="filters-row" id="filters-camara">
-                    <div class="filter-group"><label>Nome</label><input type="text" id="filtro-nome-camara" placeholder="Digite um nome..."></div>
-                    <div class="filter-group"><label>Partido</label><select id="filtro-partido-camara" multiple></select></div>
-                    <div class="filter-group"><label>Estado</label><select id="filtro-estado-camara"><option value="">Todos</option></select></div>
-                    <div class="filter-group"><label>Rede social</label><select id="filtro-rede-camara"><option value="">Todas</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="whatsapp">WhatsApp</option><option value="site">Site</option></select></div>
-                    <div class="checkbox-group"><input type="checkbox" id="filtro-mandato-camara"><label for="filtro-mandato-camara">Possui mandato em 2026</label></div>
-                </div>
-                <button class="clear-btn" id="limpar-camara">Limpar filtros</button>
-            </div>
-
-            <!-- Bloco 2: Agregação -->
-            <div class="block">
-                <div class="aggregation-row">
-                    <div class="agg-field">
-                        <label>Usuários (redes sociais)</label>
-                        <div class="social-checkboxes" id="social-check-camara">
-                            <label><input type="checkbox" value="instagram" checked> Instagram</label>
-                            <label><input type="checkbox" value="facebook" checked> Facebook</label>
-                            <label><input type="checkbox" value="tiktok" checked> TikTok</label>
-                            <label><input type="checkbox" value="whatsapp" checked> WhatsApp</label>
-                        </div>
-                        <textarea class="agg-textarea" id="usuarios-camara" readonly placeholder="Carregando..."></textarea>
-                        <button class="copy-btn" id="copy-usuarios-camara">Copiar usuários</button>
-                    </div>
-                    <div class="agg-field">
-                        <label>E-mail Institucional</label>
-                        <textarea class="agg-textarea" id="emails-camara" readonly placeholder="Carregando..."></textarea>
-                        <button class="copy-btn" id="copy-emails-camara">Copiar e-mails</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bloco 3: Resultado -->
-            <div class="block">
-                <div class="result-header">
-                    <span class="result-count" id="count-camara">Carregando...</span>
-                    <div class="export-btns">
-                        <button class="export-btn" onclick="exportCSV('camara')">Exportar CSV</button>
-                        <button class="export-btn" onclick="exportPDF()">Exportar PDF</button>
-                    </div>
-                </div>
-                <div class="table-wrapper">
-                    <table id="table-camara">
-                        <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
-                        <tbody id="tbody-camara"><tr><td colspan="11" class="loading-msg">Buscando dados da Câmara via backend</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="campo">
+          <label for="f-partido-dep">Partido</label>
+          <select id="f-partido-dep" data-filtro="partido" multiple size="1"></select>
         </div>
-
-        <!-- ================= ABA SENADO ================= -->
-        <div class="tab-content" id="tab-senado">
-            <div id="warning-senado"></div>
-
-            <!-- Bloco 1: Filtros -->
-            <div class="block">
-                <div class="block-title">Faça sua pesquisa</div>
-                <div class="filters-row" id="filters-senado">
-                    <div class="filter-group"><label>Nome</label><input type="text" id="filtro-nome-senado" placeholder="Digite um nome..."></div>
-                    <div class="filter-group"><label>Partido</label><select id="filtro-partido-senado" multiple></select></div>
-                    <div class="filter-group"><label>Estado</label><select id="filtro-estado-senado"><option value="">Todos</option></select></div>
-                    <div class="filter-group"><label>Rede social</label><select id="filtro-rede-senado"><option value="">Todas</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="whatsapp">WhatsApp</option><option value="site">Site</option></select></div>
-                    <div class="checkbox-group"><input type="checkbox" id="filtro-mandato-senado"><label for="filtro-mandato-senado">Possui mandato em 2026</label></div>
-                </div>
-                <button class="clear-btn" id="limpar-senado">Limpar filtros</button>
-            </div>
-
-            <!-- Bloco 2: Agregação -->
-            <div class="block">
-                <div class="aggregation-row">
-                    <div class="agg-field">
-                        <label>Usuários (redes sociais)</label>
-                        <div class="social-checkboxes" id="social-check-senado">
-                            <label><input type="checkbox" value="instagram" checked> Instagram</label>
-                            <label><input type="checkbox" value="facebook" checked> Facebook</label>
-                            <label><input type="checkbox" value="tiktok" checked> TikTok</label>
-                            <label><input type="checkbox" value="whatsapp" checked> WhatsApp</label>
-                        </div>
-                        <textarea class="agg-textarea" id="usuarios-senado" readonly placeholder="Carregando..."></textarea>
-                        <button class="copy-btn" id="copy-usuarios-senado">Copiar usuários</button>
-                    </div>
-                    <div class="agg-field">
-                        <label>E-mail Institucional</label>
-                        <textarea class="agg-textarea" id="emails-senado" readonly placeholder="Carregando..."></textarea>
-                        <button class="copy-btn" id="copy-emails-senado">Copiar e-mails</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bloco 3: Resultado -->
-            <div class="block">
-                <div class="result-header">
-                    <span class="result-count" id="count-senado">Carregando...</span>
-                    <div class="export-btns">
-                        <button class="export-btn" onclick="exportCSV('senado')">Exportar CSV</button>
-                        <button class="export-btn" onclick="exportPDF()">Exportar PDF</button>
-                    </div>
-                </div>
-                <div class="table-wrapper">
-                    <table id="table-senado">
-                        <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
-                        <tbody id="tbody-senado"><tr><td colspan="11" class="loading-msg">Buscando dados do Senado via backend</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="campo">
+          <label for="f-estado-dep">Estado</label>
+          <select id="f-estado-dep" data-filtro="estado"><option value="">Todos</option></select>
         </div>
-
-        <!-- RODAPÉ -->
-        <footer>
-            <div class="footer-left">
-                <strong>Legenda:</strong><br>* Suplente. Assume mandato em 2027<br>** Aguardando decisão do TSE<br>
-                <span style="display:block; margin-top:6px;">Plataforma de consulta a dados públicos de parlamentares, voltada ao fortalecimento da participação popular.</span>
-            </div>
-            <div class="footer-right">Site em construção. Novidades em breve<br><span class="visit-counter" id="visit-counter">2701</span></div>
-        </footer>
+        <div class="campo">
+          <label for="f-rede-dep">Rede social</label>
+          <select id="f-rede-dep" data-filtro="rede">
+            <option value="">Todas</option>
+            <option value="instagram">Instagram</option>
+            <option value="x">X</option>
+            <option value="facebook">Facebook</option>
+            <option value="tiktok">Tiktok</option>
+            <option value="whatsapp">Whatsapp</option>
+            <option value="site">Site</option>
+          </select>
+        </div>
+        <div class="campo campo--checkbox">
+          <input type="checkbox" id="f-mandato-dep" data-filtro="mandato2026">
+          <label for="f-mandato-dep">Possui mandato em 2026</label>
+        </div>
+      </div>
+      <div class="filtro-acoes">
+        <button class="btn-limpar" data-limpar="deputados">Limpar filtros</button>
+      </div>
     </div>
 
-    <script>
-        // ============================================================
-        // CONFIGURAÇÃO DO BACKEND
-        // Altere esta constante para o endereço onde o FastAPI está rodando
-        // ============================================================
-        const API_BASE = 'http://localhost:8000';
+    <div class="bloco">
+      <div class="agregacao-grid">
+        <div class="agregacao-campo">
+          <div class="agregacao-campo__header">
+            <span class="agregacao-campo__titulo">Usuários</span>
+            <div class="radios-arroba">
+              <label><input type="radio" name="rede-arroba-dep" value="instagram" checked> Instagram</label>
+              <label><input type="radio" name="rede-arroba-dep" value="x"> X</label>
+              <label><input type="radio" name="rede-arroba-dep" value="facebook"> Facebook</label>
+              <label><input type="radio" name="rede-arroba-dep" value="tiktok"> Tiktok</label>
+            </div>
+          </div>
+          <textarea id="saida-arroba-dep" readonly placeholder="Selecione uma rede social..."></textarea>
+          <button class="btn-copiar" data-copiar="saida-arroba-dep">Copiar usuários</button>
+        </div>
+        <div class="agregacao-campo">
+          <div class="agregacao-campo__header">
+            <span class="agregacao-campo__titulo">E-mails</span>
+          </div>
+          <textarea id="saida-email-dep" readonly placeholder="Os e-mails do resultado aparecerão aqui..."></textarea>
+          <button class="btn-copiar" data-copiar="saida-email-dep">Copiar e-mails</button>
+        </div>
+      </div>
+    </div>
 
-        // ============================================================
-        // ESTADO GLOBAL
-        // ============================================================
-        let camaraData = [];
-        let senadoData = [];
-        const UFs = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+    <div class="bloco">
+      <div class="resultado-barra">
+        <span class="resultado-contagem" id="contagem-dep">Carregando...</span>
+        <div class="resultado-acoes">
+          <button class="btn-exportar" data-exportar="csv" data-aba-export="deputados">Exportar CSV</button>
+          <button class="btn-exportar" data-exportar="pdf" data-aba-export="deputados">Exportar PDF</button>
+        </div>
+      </div>
+      <div class="tabela-envelope">
+        <div class="tabela-scroll-topo" id="scroll-topo-dep"><div class="tabela-inner" id="scroll-topo-inner-dep"></div></div>
+        <div class="tabela-scroll-fundo" id="scroll-fundo-dep">
+          <table class="tabela-resultado" id="tabela-dep">
+            <thead><tr>
+              <th>Nome<span class="col-resize"></span></th>
+              <th>Partido<span class="col-resize"></span></th>
+              <th>Estado<span class="col-resize"></span></th>
+              <th>Situação<span class="col-resize"></span></th>
+              <th>Instagram<span class="col-resize"></span></th>
+              <th>X<span class="col-resize"></span></th>
+              <th>Facebook<span class="col-resize"></span></th>
+              <th>Tiktok<span class="col-resize"></span></th>
+              <th>Whatsapp<span class="col-resize"></span></th>
+              <th>Site<span class="col-resize"></span></th>
+              <th>Telefone de Gabinete (DDD 61)<span class="col-resize"></span></th>
+              <th>E-mail<span class="col-resize"></span></th>
+            </tr></thead>
+            <tbody id="tbody-dep">
+              <tr><td colspan="12" class="tabela-loading">Buscando dados da Câmara via backend...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        // ============================================================
-        // UTILITÁRIOS
-        // ============================================================
-        async function fetchJSON(url) {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            return resp.json();
-        }
+  <!-- Painel: SENADORES -->
+  <section class="painel" id="painel-senadores" role="tabpanel">
+    <div class="aviso-tse" id="aviso-tse-sen" style="display:none;"></div>
 
-        // ============================================================
-        // CARREGAR DEPUTADOS (via backend)
-        // O backend já faz a paginação e o merge com o TSE
-        // ============================================================
-        async function carregarCamara() {
-            const tbody = document.getElementById('tbody-camara');
-            const countEl = document.getElementById('count-camara');
-            try {
-                const data = await fetchJSON(`${API_BASE}/api/deputados`);
-                camaraData = data || [];
-                countEl.textContent = `${camaraData.length} de ${camaraData.length}`;
-                popularFiltros('camara');
-                renderTable('camara');
-            } catch (err) {
-                console.error('Erro Câmara:', err);
-                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados da Câmara. Verifique se o backend está rodando em ${API_BASE}. (${err.message})</td></tr>`;
-                countEl.textContent = 'Erro';
-            }
-        }
+    <div class="bloco">
+      <h2 class="bloco__titulo">Faça sua pesquisa</h2>
+      <div class="filtro-grid">
+        <div class="campo campo--largo">
+          <label for="f-nome-sen">Nome</label>
+          <input type="text" id="f-nome-sen" data-filtro="nome" placeholder="Digite um nome...">
+        </div>
+        <div class="campo">
+          <label for="f-partido-sen">Partido</label>
+          <select id="f-partido-sen" data-filtro="partido" multiple size="1"></select>
+        </div>
+        <div class="campo">
+          <label for="f-estado-sen">Estado</label>
+          <select id="f-estado-sen" data-filtro="estado"><option value="">Todos</option></select>
+        </div>
+        <div class="campo">
+          <label for="f-rede-sen">Rede social</label>
+          <select id="f-rede-sen" data-filtro="rede">
+            <option value="">Todas</option>
+            <option value="instagram">Instagram</option>
+            <option value="x">X</option>
+            <option value="facebook">Facebook</option>
+            <option value="tiktok">Tiktok</option>
+            <option value="whatsapp">Whatsapp</option>
+            <option value="site">Site</option>
+          </select>
+        </div>
+        <div class="campo campo--checkbox">
+          <input type="checkbox" id="f-mandato-sen" data-filtro="mandato2026">
+          <label for="f-mandato-sen">Possui mandato 2026</label>
+        </div>
+      </div>
+      <div class="filtro-acoes">
+        <button class="btn-limpar" data-limpar="senadores">Limpar filtros</button>
+      </div>
+    </div>
 
-        // ============================================================
-        // CARREGAR SENADORES (via backend)
-        // ============================================================
-        async function carregarSenado() {
-            const tbody = document.getElementById('tbody-senado');
-            const countEl = document.getElementById('count-senado');
-            try {
-                const data = await fetchJSON(`${API_BASE}/api/senadores`);
-                senadoData = data || [];
-                countEl.textContent = `${senadoData.length} de ${senadoData.length}`;
-                popularFiltros('senado');
-                renderTable('senado');
-            } catch (err) {
-                console.error('Erro Senado:', err);
-                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados do Senado. Verifique se o backend está rodando em ${API_BASE}. (${err.message})</td></tr>`;
-                countEl.textContent = 'Erro';
-            }
-        }
+    <div class="bloco">
+      <div class="agregacao-grid">
+        <div class="agregacao-campo">
+          <div class="agregacao-campo__header">
+            <span class="agregacao-campo__titulo">Usuários</span>
+            <div class="radios-arroba">
+              <label><input type="radio" name="rede-arroba-sen" value="instagram" checked> Instagram</label>
+              <label><input type="radio" name="rede-arroba-sen" value="x"> X</label>
+              <label><input type="radio" name="rede-arroba-sen" value="facebook"> Facebook</label>
+              <label><input type="radio" name="rede-arroba-sen" value="tiktok"> Tiktok</label>
+            </div>
+          </div>
+          <textarea id="saida-arroba-sen" readonly placeholder="Selecione uma rede social..."></textarea>
+          <button class="btn-copiar" data-copiar="saida-arroba-sen">Copiar usuários</button>
+        </div>
+        <div class="agregacao-campo">
+          <div class="agregacao-campo__header">
+            <span class="agregacao-campo__titulo">E-mails</span>
+          </div>
+          <textarea id="saida-email-sen" readonly placeholder="Os e-mails do resultado aparecerão aqui..."></textarea>
+          <button class="btn-copiar" data-copiar="saida-email-sen">Copiar e-mails</button>
+        </div>
+      </div>
+    </div>
 
-        // ============================================================
-        // POPULAR FILTROS
-        // ============================================================
-        function popularFiltros(prefix) {
-            const data = prefix === 'camara' ? camaraData : senadoData;
-            if (!data.length) return;
+    <div class="bloco">
+      <div class="resultado-barra">
+        <span class="resultado-contagem" id="contagem-sen">Carregando...</span>
+        <div class="resultado-acoes">
+          <button class="btn-exportar" data-exportar="csv" data-aba-export="senadores">Exportar CSV</button>
+          <button class="btn-exportar" data-exportar="pdf" data-aba-export="senadores">Exportar PDF</button>
+        </div>
+      </div>
+      <div class="tabela-envelope">
+        <div class="tabela-scroll-topo" id="scroll-topo-sen"><div class="tabela-inner" id="scroll-topo-inner-sen"></div></div>
+        <div class="tabela-scroll-fundo" id="scroll-fundo-sen">
+          <table class="tabela-resultado" id="tabela-sen">
+            <thead><tr>
+              <th>Nome<span class="col-resize"></span></th>
+              <th>Partido<span class="col-resize"></span></th>
+              <th>Estado<span class="col-resize"></span></th>
+              <th>Situação<span class="col-resize"></span></th>
+              <th>Instagram<span class="col-resize"></span></th>
+              <th>X<span class="col-resize"></span></th>
+              <th>Facebook<span class="col-resize"></span></th>
+              <th>Tiktok<span class="col-resize"></span></th>
+              <th>Whatsapp<span class="col-resize"></span></th>
+              <th>Site<span class="col-resize"></span></th>
+              <th>Telefone de Gabinete (DDD 61)<span class="col-resize"></span></th>
+              <th>E-mail<span class="col-resize"></span></th>
+            </tr></thead>
+            <tbody id="tbody-sen">
+              <tr><td colspan="12" class="tabela-loading">Buscando dados do Senado via backend...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            const partidoSelect = document.getElementById(`filtro-partido-${prefix}`);
-            const estadoSelect = document.getElementById(`filtro-estado-${prefix}`);
+</main>
 
-            const partidos = [...new Set(data.map(d => d.partido))].sort();
-            partidoSelect.innerHTML = partidos.map(p => `<option value="${p}">${p}</option>`).join('');
+<footer class="rodape">
+  <div class="rodape__legenda">
+    <strong>Legenda:</strong><br>
+    * Suplente. Assume mandato em 2027<br>
+    ** Aguardando decisão do TSE<br><br>
+    Plataforma de consulta a dados públicos de parlamentares, voltada ao fortalecimento da participação popular.
+  </div>
+  <div class="rodape__construcao">
+    Site em construção. Novidades em breve
+    <!-- Contador MegaContador -->
+    <div align="center" style="margin-top:.4rem;">
+      <a title="Contador de Visitas do MegaContador" href="https://megacontador.com.br/">
+        <img src="https://megacontador.com.br/img-OEwUi94LfEjRBH0Y-57.gif" border="0" alt="Contador de visitas">
+      </a>
+    </div>
+  </div>
+</footer>
 
-            estadoSelect.innerHTML = '<option value="">Todos</option>' +
-                UFs.map(uf => `<option value="${uf}">${uf}</option>`).join('');
-        }
+<script>
+/* ================================================================
+   CONFIGURAÇÃO DO BACKEND
+   ================================================================ */
+const API_BASE = 'http://localhost:8000';
 
-        // ============================================================
-        // FILTRAR DADOS
-        // ============================================================
-        function getFilteredData(prefix) {
-            const data = prefix === 'camara' ? camaraData : senadoData;
-            if (!data.length) return [];
+/* ================================================================
+   ESTADO GLOBAL
+   ================================================================ */
+const ESTADO = {
+  deputados: { dados: [], filtrados: [] },
+  senadores: { dados: [], filtrados: [] }
+};
 
-            const nome = document.getElementById(`filtro-nome-${prefix}`).value.toLowerCase();
-            const partidoSelect = document.getElementById(`filtro-partido-${prefix}`);
-            const partidosSelecionados = Array.from(partidoSelect.selectedOptions).map(o => o.value);
-            const estado = document.getElementById(`filtro-estado-${prefix}`).value;
-            const rede = document.getElementById(`filtro-rede-${prefix}`).value;
-            const mandato = document.getElementById(`filtro-mandato-${prefix}`).checked;
+const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
-            return data.filter(d => {
-                if (nome && !d.nome.toLowerCase().includes(nome)) return false;
-                if (partidosSelecionados.length > 0 && !partidosSelecionados.includes(d.partido)) return false;
-                if (estado && d.estado !== estado) return false;
-                if (rede && !d[rede]) return false;
-                if (mandato && !d.mandato2026) return false;
-                return true;
-            });
-        }
+/* ================================================================
+   HELPERS
+   ================================================================ */
+async function fetchJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
 
-        // ============================================================
-        // RENDERIZAR TABELA
-        // ============================================================
-        function renderTable(prefix) {
-            const data = prefix === 'camara' ? camaraData : senadoData;
-            const filtered = getFilteredData(prefix);
-            const tbody = document.getElementById(`tbody-${prefix}`);
-            const countEl = document.getElementById(`count-${prefix}`);
+function escaparHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
 
-            if (!data.length) return;
+/* ================================================================
+   NORMALIZAÇÃO DE DADOS DO BACKEND
+   O backend pode retornar campos já prontos (instagram, x, facebook,
+   tiktok, whatsapp, site, telefone, email). Vamos garantir formato
+   consistente com o esperado pelo layout (links + arrobas).
+   ================================================================ */
+function normalizarParlamentar(p, origem) {
+  // O backend retorna links completos ou arrobas. Vamos padronizar.
+  const rede = (valor, tipo) => {
+    if (!valor) return { link: '', arroba: '' };
+    if (valor.startsWith('http')) {
+      let arroba = '';
+      try {
+        const path = valor.split('/').filter(Boolean).pop() || '';
+        arroba = path.replace('@', '');
+      } catch (e) { /* ignore */ }
+      return { link: valor, arroba: arroba ? '@' + arroba : '' };
+    }
+    // Se veio só a arroba
+    const arroba = valor.startsWith('@') ? valor : '@' + valor;
+    let link = '';
+    if (tipo === 'instagram') link = 'https://instagram.com/' + arroba.replace('@','');
+    else if (tipo === 'facebook') link = 'https://facebook.com/' + arroba.replace('@','');
+    else if (tipo === 'tiktok') link = 'https://tiktok.com/@' + arroba.replace('@','');
+    else if (tipo === 'x') link = 'https://x.com/' + arroba.replace('@','');
+    else if (tipo === 'whatsapp') link = 'https://wa.me/' + arroba.replace('@','');
+    return { link, arroba };
+  };
 
-            countEl.textContent = `${filtered.length} de ${data.length}`;
+  const insta = rede(p.instagram, 'instagram');
+  const x = rede(p.x || p.twitter, 'x');
+  const face = rede(p.facebook, 'facebook');
+  const tik = rede(p.tiktok, 'tiktok');
+  const zap = rede(p.whatsapp, 'whatsapp');
 
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="empty-result">Nenhum resultado encontrado.</td></tr>';
-                updateAggregation(prefix, []);
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(d => {
-                const suplenteMark = d.suplente ? ' <span class="suplente-badge">*</span>' : '';
-                const nomeCell = d.siteOficial
-                    ? `<a href="${d.siteOficial}" target="_blank" class="name-link">${d.nome}</a>${suplenteMark}`
-                    : `${d.nome}${suplenteMark}`;
-
-                const fotoCell = d.foto
-                    ? `<img src="${d.foto}" alt="${d.nome}" onerror="this.style.display='none'">`
-                    : '<span style="color:var(--text-muted); font-size:0.7rem;">—</span>';
-
-                const socialLink = (user, rede) => {
-                    if (!user) return '—';
-                    let url = '';
-                    if (rede === 'instagram') url = `https://instagram.com/${user.replace('@','')}`;
-                    else if (rede === 'facebook') url = `https://facebook.com/${user.replace('@','')}`;
-                    else if (rede === 'tiktok') url = `https://tiktok.com/@${user.replace('@','')}`;
-                    else if (rede === 'whatsapp') url = `https://wa.me/${user}`;
-                    const display = user.startsWith('@') ? user : (rede === 'whatsapp' ? user : '@' + user);
-                    return `<a href="${url}" target="_blank" class="social-icon">${display}</a>`;
-                };
-
-                const siteCell = d.site ? `<a href="${d.site}" target="_blank" class="social-icon">Link</a>` : '—';
-
-                return `<tr>
-                    <td class="foto-cell">${fotoCell}</td>
-                    <td>${nomeCell}</td>
-                    <td>${d.partido}</td>
-                    <td>${d.estado}</td>
-                    <td>${socialLink(d.instagram, 'instagram')}</td>
-                    <td>${socialLink(d.facebook, 'facebook')}</td>
-                    <td>${socialLink(d.tiktok, 'tiktok')}</td>
-                    <td>${socialLink(d.whatsapp, 'whatsapp')}</td>
-                    <td>${siteCell}</td>
-                    <td>${d.telefone || '—'}</td>
-                    <td>${d.email || '—'}</td>
-                </tr>`;
-            }).join('');
-
-            updateAggregation(prefix, filtered);
-        }
-
-        // ============================================================
-        // ATUALIZAR AGREGAÇÃO
-        // ============================================================
-        function updateAggregation(prefix, filtered) {
-            const socialChecks = document.querySelectorAll(`#social-check-${prefix} input:checked`);
-            const redesSelecionadas = Array.from(socialChecks).map(c => c.value);
-
-            let usuarios = [];
-            filtered.forEach(d => {
-                redesSelecionadas.forEach(rede => {
-                    if (d[rede]) {
-                        let user = d[rede];
-                        if ((rede === 'instagram' || rede === 'facebook' || rede === 'tiktok') && !user.startsWith('@')) {
-                            user = '@' + user;
-                        }
-                        usuarios.push(user);
-                    }
-                });
-            });
-            document.getElementById(`usuarios-${prefix}`).value = usuarios.join(' ');
-
-            const emails = filtered.map(d => d.email).filter(e => e);
-            document.getElementById(`emails-${prefix}`).value = emails.join('; ');
-        }
-
-        // ============================================================
-        // EVENTOS DE FILTRO
-        // ============================================================
-        function setupFilterEvents(prefix) {
-            ['nome','partido','estado','rede','mandato'].forEach(id => {
-                const el = document.getElementById(`filtro-${id}-${prefix}`);
-                if (el) el.addEventListener(id === 'nome' ? 'input' : 'change', () => renderTable(prefix));
-            });
-
-            document.querySelectorAll(`#social-check-${prefix} input`).forEach(cb => {
-                cb.addEventListener('change', () => {
-                    const filtered = getFilteredData(prefix);
-                    updateAggregation(prefix, filtered);
-                });
-            });
-
-            document.getElementById(`limpar-${prefix}`).addEventListener('click', () => {
-                document.getElementById(`filtro-nome-${prefix}`).value = '';
-                document.getElementById(`filtro-partido-${prefix}`).selectedIndex = -1;
-                document.getElementById(`filtro-estado-${prefix}`).value = '';
-                document.getElementById(`filtro-rede-${prefix}`).value = '';
-                document.getElementById(`filtro-mandato-${prefix}`).checked = false;
-                renderTable(prefix);
-            });
-
-            document.getElementById(`copy-usuarios-${prefix}`).addEventListener('click', () => {
-                const ta = document.getElementById(`usuarios-${prefix}`);
-                ta.select(); document.execCommand('copy');
-                alert('Usuários copiados!');
-            });
-
-            document.getElementById(`copy-emails-${prefix}`).addEventListener('click', () => {
-                const ta = document.getElementById(`emails-${prefix}`);
-                ta.select(); document.execCommand('copy');
-                alert('E-mails copiados!');
-            });
-        }
-
-        // ============================================================
-        // EXPORTAR CSV
-        // ============================================================
-        function exportCSV(prefix) {
-            const filtered = getFilteredData(prefix);
-            if (!filtered.length) { alert('Nenhum dado para exportar.'); return; }
-            const headers = ['Foto','Nome','Partido','Estado','Instagram','Facebook','TikTok','WhatsApp','Site','Telefone','E-mail'];
-            const rows = filtered.map(d => [
-                d.foto ? 'Com foto' : '', d.nome, d.partido, d.estado,
-                d.instagram, d.facebook, d.tiktok, d.whatsapp,
-                d.site, d.telefone, d.email
-            ]);
-            let csv = headers.join(',') + '\n';
-            rows.forEach(r => { csv += r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',') + '\n'; });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `congresso_${prefix}.csv`;
-            link.click();
-        }
-
-        function exportPDF() { window.print(); }
-
-        // ============================================================
-        // CONTADOR DE VISITAS (simulado)
-        // ============================================================
-        function initVisitCounter() {
-            const key = 'congresso_visits';
-            let visits = localStorage.getItem(key);
-            visits = visits ? parseInt(visits) + 1 : 2701;
-            localStorage.setItem(key, visits);
-            document.getElementById('visit-counter').textContent = visits;
-        }
-
-        // ============================================================
-        // INICIALIZAÇÃO
-        // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            setupFilterEvents('camara');
-            setupFilterEvents('senado');
-            initVisitCounter();
-
-            // Controle de abas
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-                });
-            });
-
-            // Dispara as chamadas ao backend (que já resolve CORS, paginação e TSE)
-            carregarCamara();
-            carregarSenado();
-        });
-    </script>
-</body>
-</html>
+  return {
+    nome: p.nome || '',
+    partido: p.partido || '',
+    estado: p.estado || '',
+    situacao: p.situacao || (p.mandato2026 ? 'Em exercício' : ''),
+    email: p.email || '',
+    telefone: p.telefone || '',
+    instagram: insta.link,
+    instagramArroba: insta.arroba,
+    x: x.link,
+    xArroba: x.arroba,
+    facebook: face.link,
+    facebookArroba: face.arroba,
+    tiktok: tik.link,
