@@ -692,4 +692,260 @@ function normalizarParlamentar(p, origem) {
     xArroba: x.arroba,
     facebook: face.link,
     facebookArroba: face.arroba,
-    tiktok: tik.link,
+        tiktok: tik.link,
+    tiktokArroba: tik.arroba,
+    whatsapp: zap.link,
+    whatsappArroba: zap.arroba,
+    site: p.site || ''
+  };
+}
+
+/* ================================================================
+   RENDERIZAÇÃO DA TABELA
+   ================================================================ */
+function celulaRede(link, arroba) {
+  if (!link && !arroba) return '—';
+  const texto = arroba || link;
+  if (link) return `<a href="${link}" target="_blank" rel="noopener">${escaparHtml(texto)}</a>`;
+  return escaparHtml(texto);
+}
+
+function renderizarTabela(aba) {
+  const dados = ESTADO[aba].filtrados;
+  const total = ESTADO[aba].dados.length;
+  const tbody = document.getElementById(`tbody-${aba === 'deputados' ? 'dep' : 'sen'}`);
+  const contagem = document.getElementById(`contagem-${aba === 'deputados' ? 'dep' : 'sen'}`);
+
+  contagem.innerHTML = `<strong>${dados.length}</strong> de ${total}`;
+
+  if (dados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" class="tabela-vazia">Nenhum resultado encontrado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = dados.map(p => `
+    <tr>
+      <td>${escaparHtml(p.nome)}</td>
+      <td>${escaparHtml(p.partido)}</td>
+      <td>${escaparHtml(p.estado)}</td>
+      <td>${escaparHtml(p.situacao)}</td>
+      <td>${celulaRede(p.instagram, p.instagramArroba)}</td>
+      <td>${celulaRede(p.x, p.xArroba)}</td>
+      <td>${celulaRede(p.facebook, p.facebookArroba)}</td>
+      <td>${celulaRede(p.tiktok, p.tiktokArroba)}</td>
+      <td>${celulaRede(p.whatsapp, p.whatsappArroba)}</td>
+      <td>${p.site ? `<a href="${p.site}" target="_blank" rel="noopener">Link</a>` : '—'}</td>
+      <td>${escaparHtml(p.telefone)}</td>
+      <td>${escaparHtml(p.email)}</td>
+    </tr>
+  `).join('');
+}
+
+/* ================================================================
+   AGREGAÇÃO (arrobas + e-mails)
+   ================================================================ */
+function atualizarAgregacao(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+  const dados = ESTADO[aba].filtrados;
+
+  // Rede escolhida nos radios
+  const radio = document.querySelector(`input[name="rede-arroba-${sufixo}"]:checked`);
+  const rede = radio ? radio.value : 'instagram';
+  const campoArroba = `${rede}Arroba`;
+
+  const arrobas = dados.map(p => p[campoArroba]).filter(Boolean);
+  document.getElementById(`saida-arroba-${sufixo}`).value = arrobas.join(' ');
+
+  const emails = dados.map(p => p.email).filter(Boolean);
+  document.getElementById(`saida-email-${sufixo}`).value = emails.join('; ');
+}
+
+/* ================================================================
+   FILTROS
+   ================================================================ */
+function aplicarFiltros(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+  const dados = ESTADO[aba].dados;
+
+  const nome = document.getElementById(`f-nome-${sufixo}`).value.trim().toLowerCase();
+  const partidoSelect = document.getElementById(`f-partido-${sufixo}`);
+  const partidos = Array.from(partidoSelect.selectedOptions).map(o => o.value);
+  const estado = document.getElementById(`f-estado-${sufixo}`).value;
+  const rede = document.getElementById(`f-rede-${sufixo}`).value;
+  const mandato = document.getElementById(`f-mandato-${sufixo}`).checked;
+
+  ESTADO[aba].filtrados = dados.filter(p => {
+    if (nome && !p.nome.toLowerCase().includes(nome)) return false;
+    if (partidos.length && !partidos.includes(p.partido)) return false;
+    if (estado && p.estado !== estado) return false;
+    if (rede && !p[rede]) return false;
+    if (mandato && !p.mandato2026) return false;
+    return true;
+  });
+
+  renderizarTabela(aba);
+  atualizarAgregacao(aba);
+}
+
+function preencherFiltros(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+  const dados = ESTADO[aba].dados;
+
+  // Partidos únicos
+  const partidos = [...new Set(dados.map(p => p.partido).filter(Boolean))].sort();
+  const selectPartido = document.getElementById(`f-partido-${sufixo}`);
+  selectPartido.innerHTML = partidos.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  // Estados
+  const selectEstado = document.getElementById(`f-estado-${sufixo}`);
+  selectEstado.innerHTML = '<option value="">Todos</option>' +
+    UFS.map(uf => `<option value="${uf}">${uf}</option>`).join('');
+}
+
+function limparFiltros(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+  document.getElementById(`f-nome-${sufixo}`).value = '';
+  document.getElementById(`f-partido-${sufixo}`).selectedIndex = -1;
+  document.getElementById(`f-estado-${sufixo}`).value = '';
+  document.getElementById(`f-rede-${sufixo}`).value = '';
+  document.getElementById(`f-mandato-${sufixo}`).checked = false;
+  aplicarFiltros(aba);
+}
+
+/* ================================================================
+   CARREGAMENTO VIA BACKEND
+   ================================================================ */
+async function carregarAba(aba) {
+  const endpoint = aba === 'deputados' ? '/api/deputados' : '/api/senadores';
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+  const tbody = document.getElementById(`tbody-${sufixo}`);
+  const contagem = document.getElementById(`contagem-${sufixo}`);
+
+  try {
+    const raw = await fetchJSON(`${API_BASE}${endpoint}`);
+    const lista = (raw || []).map(p => normalizarParlamentar(p, aba));
+    ESTADO[aba].dados = lista;
+    ESTADO[aba].filtrados = [...lista];
+
+    preencherFiltros(aba);
+    renderizarTabela(aba);
+    atualizarAgregacao(aba);
+  } catch (err) {
+    console.error(`Erro ao carregar ${aba}:`, err);
+    tbody.innerHTML = `<tr><td colspan="12" class="tabela-erro">
+      Não foi possível carregar os dados. Verifique se o backend está rodando em ${API_BASE}.<br>
+      <small>${escaparHtml(err.message)}</small>
+    </td></tr>`;
+    contagem.textContent = 'Erro';
+  }
+}
+
+/* ================================================================
+   EVENTOS
+   ================================================================ */
+function configurarEventos(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
+
+  // Filtros
+  ['nome','partido','estado','rede','mandato'].forEach(id => {
+    const el = document.getElementById(`f-${id}-${sufixo}`);
+    if (!el) return;
+    const evento = id === 'nome' ? 'input' : 'change';
+    el.addEventListener(evento, () => aplicarFiltros(aba));
+  });
+
+  // Botão limpar
+  document.querySelector(`[data-limpar="${aba}"]`)
+    .addEventListener('click', () => limparFiltros(aba));
+
+  // Radios de rede (para agregação de arrobas)
+  document.querySelectorAll(`input[name="rede-arroba-${sufixo}"]`)
+    .forEach(r => r.addEventListener('change', () => atualizarAgregacao(aba)));
+
+  // Botões copiar
+  document.querySelectorAll(`[data-copiar]`).forEach(btn => {
+    const alvo = btn.getAttribute('data-copiar');
+    if (!alvo.endsWith(sufixo)) return;
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(alvo);
+      ta.select();
+      document.execCommand('copy');
+      const original = btn.textContent;
+      btn.textContent = 'Copiado!';
+      btn.classList.add('btn-copiar--copiado');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('btn-copiar--copiado');
+      }, 1200);
+    });
+  });
+
+  // Botões exportar
+  document.querySelectorAll(`[data-aba-export="${aba}"]`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tipo = btn.getAttribute('data-exportar');
+      if (tipo === 'csv') exportarCSV(aba);
+      else window.print();
+    });
+  });
+}
+
+/* ================================================================
+   EXPORTAR CSV
+   ================================================================ */
+function exportarCSV(aba) {
+  const dados = ESTADO[aba].filtrados;
+  if (!dados.length) { alert('Nenhum dado para exportar.'); return; }
+
+  const cabecalho = ['Nome','Partido','Estado','Situação','Instagram','X','Facebook','TikTok','WhatsApp','Site','Telefone','E-mail'];
+  const linhas = dados.map(p => [
+    p.nome, p.partido, p.estado, p.situacao,
+    p.instagramArroba, p.xArroba, p.facebookArroba, p.tiktokArroba, p.whatsappArroba,
+    p.site, p.telefone, p.email
+  ]);
+
+  let csv = cabecalho.join(';') + '\n';
+  linhas.forEach(l => {
+    csv += l.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(';') + '\n';
+  });
+
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `congresso_${aba}.csv`;
+  link.click();
+}
+
+/* ================================================================
+   ABAS
+   ================================================================ */
+function configurarAbas() {
+  document.querySelectorAll('.menu-abas__botao').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const alvo = btn.getAttribute('data-aba');
+
+      document.querySelectorAll('.menu-abas__botao').forEach(b => {
+        b.classList.remove('menu-abas__botao--ativo');
+        b.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.painel').forEach(p => p.classList.remove('painel--ativo'));
+
+      btn.classList.add('menu-abas__botao--ativo');
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById(`painel-${alvo}`).classList.add('painel--ativo');
+    });
+  });
+}
+
+/* ================================================================
+   INICIALIZAÇÃO
+   ================================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  configurarAbas();
+  configurarEventos('deputados');
+  configurarEventos('senadores');
+
+  // Carrega as duas abas (a de senadores em segundo plano)
+  carregarAba('deputados');
+  carregarAba('senadores');
+});
