@@ -370,13 +370,17 @@ table.tabela-resultado a:hover { text-decoration: underline; }
 </head>
 <body>
 
-<!-- CABEÇALHO -->
+<!-- ============================================================
+     CABEÇALHO (2 linhas)
+     ============================================================ -->
 <header class="cabecalho">
   <h1 class="cabecalho__titulo">Pesquisa · Congresso Nacional</h1>
   <p class="cabecalho__subtitulo">E aí, já cobrou o congresso hoje?</p>
 </header>
 
-<!-- MENU EM ABAS -->
+<!-- ============================================================
+     MENU EM ABAS
+     ============================================================ -->
 <nav class="menu-abas" role="tablist" aria-label="Navegação principal">
   <button class="menu-abas__botao menu-abas__botao--ativo"
           role="tab" aria-selected="true" data-aba="deputados">
@@ -388,31 +392,34 @@ table.tabela-resultado a:hover { text-decoration: underline; }
   </button>
 </nav>
 
-<!-- CONTEÚDO -->
+<!-- ============================================================
+     CONTEÚDO
+     ============================================================ -->
 <main class="conteudo">
 
-  <!-- Painel: DEPUTADOS -->
+  <!-- ================= PAINEL: DEPUTADOS ================= -->
   <section class="painel painel--ativo" id="painel-deputados" role="tabpanel">
     <div class="aviso-tse" id="aviso-tse-dep" style="display:none;"></div>
 
+    <!-- Bloco 1: Filtros -->
     <div class="bloco">
       <h2 class="bloco__titulo">Faça sua pesquisa</h2>
       <div class="filtro-grid">
         <div class="campo campo--largo">
           <label for="f-nome-dep">Nome</label>
-          <input type="text" id="f-nome-dep" data-filtro="nome" placeholder="Digite um nome...">
+          <input type="text" id="f-nome-dep" placeholder="Digite um nome...">
         </div>
         <div class="campo">
           <label for="f-partido-dep">Partido</label>
-          <select id="f-partido-dep" data-filtro="partido" multiple size="1"></select>
+          <select id="f-partido-dep" multiple size="1"></select>
         </div>
         <div class="campo">
           <label for="f-estado-dep">Estado</label>
-          <select id="f-estado-dep" data-filtro="estado"><option value="">Todos</option></select>
+          <select id="f-estado-dep"><option value="">Todos</option></select>
         </div>
         <div class="campo">
           <label for="f-rede-dep">Rede social</label>
-          <select id="f-rede-dep" data-filtro="rede">
+          <select id="f-rede-dep">
             <option value="">Todas</option>
             <option value="instagram">Instagram</option>
             <option value="x">X</option>
@@ -423,15 +430,16 @@ table.tabela-resultado a:hover { text-decoration: underline; }
           </select>
         </div>
         <div class="campo campo--checkbox">
-          <input type="checkbox" id="f-mandato-dep" data-filtro="mandato2026">
+          <input type="checkbox" id="f-mandato-dep">
           <label for="f-mandato-dep">Possui mandato em 2026</label>
         </div>
       </div>
       <div class="filtro-acoes">
-        <button class="btn-limpar" data-limpar="deputados">Limpar filtros</button>
+        <button class="btn-limpar" id="limpar-dep">Limpar filtros</button>
       </div>
     </div>
 
+    <!-- Bloco 2: Agregação -->
     <div class="bloco">
       <div class="agregacao-grid">
         <div class="agregacao-campo">
@@ -445,24 +453,25 @@ table.tabela-resultado a:hover { text-decoration: underline; }
             </div>
           </div>
           <textarea id="saida-arroba-dep" readonly placeholder="Selecione uma rede social..."></textarea>
-          <button class="btn-copiar" data-copiar="saida-arroba-dep">Copiar usuários</button>
+          <button class="btn-copiar" id="copiar-arroba-dep">Copiar usuários</button>
         </div>
         <div class="agregacao-campo">
           <div class="agregacao-campo__header">
             <span class="agregacao-campo__titulo">E-mails</span>
           </div>
           <textarea id="saida-email-dep" readonly placeholder="Os e-mails do resultado aparecerão aqui..."></textarea>
-          <button class="btn-copiar" data-copiar="saida-email-dep">Copiar e-mails</button>
+          <button class="btn-copiar" id="copiar-email-dep">Copiar e-mails</button>
         </div>
       </div>
     </div>
 
+    <!-- Bloco 3: Resultado -->
     <div class="bloco">
       <div class="resultado-barra">
         <span class="resultado-contagem" id="contagem-dep">Carregando...</span>
         <div class="resultado-acoes">
-          <button class="btn-exportar" data-exportar="csv" data-aba-export="deputados">Exportar CSV</button>
-          <button class="btn-exportar" data-exportar="pdf" data-aba-export="deputados">Exportar PDF</button>
+          <button class="btn-exportar" id="csv-dep">Exportar CSV</button>
+          <button class="btn-exportar" id="pdf-dep">Exportar PDF</button>
         </div>
       </div>
       <div class="tabela-envelope">
@@ -492,28 +501,29 @@ table.tabela-resultado a:hover { text-decoration: underline; }
     </div>
   </section>
 
-  <!-- Painel: SENADORES -->
+  <!-- ================= PAINEL: SENADORES ================= -->
   <section class="painel" id="painel-senadores" role="tabpanel">
     <div class="aviso-tse" id="aviso-tse-sen" style="display:none;"></div>
 
+    <!-- Bloco 1: Filtros -->
     <div class="bloco">
       <h2 class="bloco__titulo">Faça sua pesquisa</h2>
       <div class="filtro-grid">
         <div class="campo campo--largo">
           <label for="f-nome-sen">Nome</label>
-          <input type="text" id="f-nome-sen" data-filtro="nome" placeholder="Digite um nome...">
+          <input type="text" id="f-nome-sen" placeholder="Digite um nome...">
         </div>
         <div class="campo">
           <label for="f-partido-sen">Partido</label>
-          <select id="f-partido-sen" data-filtro="partido" multiple size="1"></select>
+          <select id="f-partido-sen" multiple size="1"></select>
         </div>
         <div class="campo">
           <label for="f-estado-sen">Estado</label>
-          <select id="f-estado-sen" data-filtro="estado"><option value="">Todos</option></select>
+          <select id="f-estado-sen"><option value="">Todos</option></select>
         </div>
         <div class="campo">
           <label for="f-rede-sen">Rede social</label>
-          <select id="f-rede-sen" data-filtro="rede">
+          <select id="f-rede-sen">
             <option value="">Todas</option>
             <option value="instagram">Instagram</option>
             <option value="x">X</option>
@@ -524,15 +534,16 @@ table.tabela-resultado a:hover { text-decoration: underline; }
           </select>
         </div>
         <div class="campo campo--checkbox">
-          <input type="checkbox" id="f-mandato-sen" data-filtro="mandato2026">
+          <input type="checkbox" id="f-mandato-sen">
           <label for="f-mandato-sen">Possui mandato 2026</label>
         </div>
       </div>
       <div class="filtro-acoes">
-        <button class="btn-limpar" data-limpar="senadores">Limpar filtros</button>
+        <button class="btn-limpar" id="limpar-sen">Limpar filtros</button>
       </div>
     </div>
 
+    <!-- Bloco 2: Agregação -->
     <div class="bloco">
       <div class="agregacao-grid">
         <div class="agregacao-campo">
@@ -546,24 +557,25 @@ table.tabela-resultado a:hover { text-decoration: underline; }
             </div>
           </div>
           <textarea id="saida-arroba-sen" readonly placeholder="Selecione uma rede social..."></textarea>
-          <button class="btn-copiar" data-copiar="saida-arroba-sen">Copiar usuários</button>
+          <button class="btn-copiar" id="copiar-arroba-sen">Copiar usuários</button>
         </div>
         <div class="agregacao-campo">
           <div class="agregacao-campo__header">
             <span class="agregacao-campo__titulo">E-mails</span>
           </div>
           <textarea id="saida-email-sen" readonly placeholder="Os e-mails do resultado aparecerão aqui..."></textarea>
-          <button class="btn-copiar" data-copiar="saida-email-sen">Copiar e-mails</button>
+          <button class="btn-copiar" id="copiar-email-sen">Copiar e-mails</button>
         </div>
       </div>
     </div>
 
+    <!-- Bloco 3: Resultado -->
     <div class="bloco">
       <div class="resultado-barra">
         <span class="resultado-contagem" id="contagem-sen">Carregando...</span>
         <div class="resultado-acoes">
-          <button class="btn-exportar" data-exportar="csv" data-aba-export="senadores">Exportar CSV</button>
-          <button class="btn-exportar" data-exportar="pdf" data-aba-export="senadores">Exportar PDF</button>
+          <button class="btn-exportar" id="csv-sen">Exportar CSV</button>
+          <button class="btn-exportar" id="pdf-sen">Exportar PDF</button>
         </div>
       </div>
       <div class="tabela-envelope">
@@ -595,6 +607,9 @@ table.tabela-resultado a:hover { text-decoration: underline; }
 
 </main>
 
+<!-- ============================================================
+     RODAPÉ
+     ============================================================ -->
 <footer class="rodape">
   <div class="rodape__legenda">
     <strong>Legenda:</strong><br>
@@ -616,6 +631,7 @@ table.tabela-resultado a:hover { text-decoration: underline; }
 <script>
 /* ================================================================
    CONFIGURAÇÃO DO BACKEND
+   Troque para a URL pública após implantar (Render, Railway, etc.)
    ================================================================ */
 const API_BASE = 'http://localhost:8000';
 
@@ -645,39 +661,37 @@ function escaparHtml(str) {
 }
 
 /* ================================================================
-   NORMALIZAÇÃO DE DADOS DO BACKEND
-   O backend pode retornar campos já prontos (instagram, x, facebook,
-   tiktok, whatsapp, site, telefone, email). Vamos garantir formato
-   consistente com o esperado pelo layout (links + arrobas).
+   NORMALIZAÇÃO
+   O backend pode retornar links completos ou arrobas. Padronizamos
+   para o formato esperado pelo layout: { link, arroba }.
    ================================================================ */
-function normalizarParlamentar(p, origem) {
-  // O backend retorna links completos ou arrobas. Vamos padronizar.
-  const rede = (valor, tipo) => {
-    if (!valor) return { link: '', arroba: '' };
-    if (valor.startsWith('http')) {
-      let arroba = '';
-      try {
-        const path = valor.split('/').filter(Boolean).pop() || '';
-        arroba = path.replace('@', '');
-      } catch (e) { /* ignore */ }
-      return { link: valor, arroba: arroba ? '@' + arroba : '' };
-    }
-    // Se veio só a arroba
-    const arroba = valor.startsWith('@') ? valor : '@' + valor;
-    let link = '';
-    if (tipo === 'instagram') link = 'https://instagram.com/' + arroba.replace('@','');
-    else if (tipo === 'facebook') link = 'https://facebook.com/' + arroba.replace('@','');
-    else if (tipo === 'tiktok') link = 'https://tiktok.com/@' + arroba.replace('@','');
-    else if (tipo === 'x') link = 'https://x.com/' + arroba.replace('@','');
-    else if (tipo === 'whatsapp') link = 'https://wa.me/' + arroba.replace('@','');
-    return { link, arroba };
-  };
+function extrairRede(valor, tipo) {
+  if (!valor) return { link: '', arroba: '' };
+  if (String(valor).startsWith('http')) {
+    let arroba = '';
+    try {
+      const path = String(valor).split('/').filter(Boolean).pop() || '';
+      arroba = path.replace('@', '').split('?')[0];
+    } catch (e) { /* ignore */ }
+    return { link: valor, arroba: arroba ? '@' + arroba : '' };
+  }
+  const arroba = String(valor).startsWith('@') ? valor : '@' + valor;
+  const handle = arroba.replace('@', '');
+  let link = '';
+  if (tipo === 'instagram') link = 'https://instagram.com/' + handle;
+  else if (tipo === 'facebook') link = 'https://facebook.com/' + handle;
+  else if (tipo === 'tiktok') link = 'https://tiktok.com/@' + handle;
+  else if (tipo === 'x') link = 'https://x.com/' + handle;
+  else if (tipo === 'whatsapp') link = 'https://wa.me/' + handle;
+  return { link, arroba };
+}
 
-  const insta = rede(p.instagram, 'instagram');
-  const x = rede(p.x || p.twitter, 'x');
-  const face = rede(p.facebook, 'facebook');
-  const tik = rede(p.tiktok, 'tiktok');
-  const zap = rede(p.whatsapp, 'whatsapp');
+function normalizarParlamentar(p) {
+  const insta = extrairRede(p.instagram, 'instagram');
+  const x = extrairRede(p.x || p.twitter, 'x');
+  const face = extrairRede(p.facebook, 'facebook');
+  const tik = extrairRede(p.tiktok, 'tiktok');
+  const zap = extrairRede(p.whatsapp, 'whatsapp');
 
   return {
     nome: p.nome || '',
@@ -686,17 +700,18 @@ function normalizarParlamentar(p, origem) {
     situacao: p.situacao || (p.mandato2026 ? 'Em exercício' : ''),
     email: p.email || '',
     telefone: p.telefone || '',
+    site: p.site || '',
+    mandato2026: !!p.mandato2026,
     instagram: insta.link,
     instagramArroba: insta.arroba,
     x: x.link,
     xArroba: x.arroba,
     facebook: face.link,
     facebookArroba: face.arroba,
-        tiktok: tik.link,
+    tiktok: tik.link,
     tiktokArroba: tik.arroba,
     whatsapp: zap.link,
-    whatsappArroba: zap.arroba,
-    site: p.site || ''
+    whatsappArroba: zap.arroba
   };
 }
 
@@ -711,10 +726,11 @@ function celulaRede(link, arroba) {
 }
 
 function renderizarTabela(aba) {
+  const sufixo = aba === 'deputados' ? 'dep' : 'sen';
   const dados = ESTADO[aba].filtrados;
   const total = ESTADO[aba].dados.length;
-  const tbody = document.getElementById(`tbody-${aba === 'deputados' ? 'dep' : 'sen'}`);
-  const contagem = document.getElementById(`contagem-${aba === 'deputados' ? 'dep' : 'sen'}`);
+  const tbody = document.getElementById(`tbody-${sufixo}`);
+  const contagem = document.getElementById(`contagem-${sufixo}`);
 
   contagem.innerHTML = `<strong>${dados.length}</strong> de ${total}`;
 
@@ -748,7 +764,6 @@ function atualizarAgregacao(aba) {
   const sufixo = aba === 'deputados' ? 'dep' : 'sen';
   const dados = ESTADO[aba].filtrados;
 
-  // Rede escolhida nos radios
   const radio = document.querySelector(`input[name="rede-arroba-${sufixo}"]:checked`);
   const rede = radio ? radio.value : 'instagram';
   const campoArroba = `${rede}Arroba`;
@@ -791,12 +806,10 @@ function preencherFiltros(aba) {
   const sufixo = aba === 'deputados' ? 'dep' : 'sen';
   const dados = ESTADO[aba].dados;
 
-  // Partidos únicos
   const partidos = [...new Set(dados.map(p => p.partido).filter(Boolean))].sort();
   const selectPartido = document.getElementById(`f-partido-${sufixo}`);
   selectPartido.innerHTML = partidos.map(p => `<option value="${p}">${p}</option>`).join('');
 
-  // Estados
   const selectEstado = document.getElementById(`f-estado-${sufixo}`);
   selectEstado.innerHTML = '<option value="">Todos</option>' +
     UFS.map(uf => `<option value="${uf}">${uf}</option>`).join('');
@@ -823,7 +836,7 @@ async function carregarAba(aba) {
 
   try {
     const raw = await fetchJSON(`${API_BASE}${endpoint}`);
-    const lista = (raw || []).map(p => normalizarParlamentar(p, aba));
+    const lista = (raw || []).map(normalizarParlamentar);
     ESTADO[aba].dados = lista;
     ESTADO[aba].filtrados = [...lista];
 
@@ -841,12 +854,11 @@ async function carregarAba(aba) {
 }
 
 /* ================================================================
-   EVENTOS
+   EVENTOS DE FILTRO E AGREGAÇÃO
    ================================================================ */
 function configurarEventos(aba) {
   const sufixo = aba === 'deputados' ? 'dep' : 'sen';
 
-  // Filtros
   ['nome','partido','estado','rede','mandato'].forEach(id => {
     const el = document.getElementById(`f-${id}-${sufixo}`);
     if (!el) return;
@@ -854,40 +866,34 @@ function configurarEventos(aba) {
     el.addEventListener(evento, () => aplicarFiltros(aba));
   });
 
-  // Botão limpar
-  document.querySelector(`[data-limpar="${aba}"]`)
+  document.getElementById(`limpar-${sufixo}`)
     .addEventListener('click', () => limparFiltros(aba));
 
-  // Radios de rede (para agregação de arrobas)
   document.querySelectorAll(`input[name="rede-arroba-${sufixo}"]`)
     .forEach(r => r.addEventListener('change', () => atualizarAgregacao(aba)));
 
-  // Botões copiar
-  document.querySelectorAll(`[data-copiar]`).forEach(btn => {
-    const alvo = btn.getAttribute('data-copiar');
-    if (!alvo.endsWith(sufixo)) return;
-    btn.addEventListener('click', () => {
-      const ta = document.getElementById(alvo);
-      ta.select();
-      document.execCommand('copy');
-      const original = btn.textContent;
-      btn.textContent = 'Copiado!';
-      btn.classList.add('btn-copiar--copiado');
-      setTimeout(() => {
-        btn.textContent = original;
-        btn.classList.remove('btn-copiar--copiado');
-      }, 1200);
-    });
+  document.getElementById(`copiar-arroba-${sufixo}`).addEventListener('click', () => {
+    const ta = document.getElementById(`saida-arroba-${sufixo}`);
+    ta.select(); document.execCommand('copy');
+    const btn = document.getElementById(`copiar-arroba-${sufixo}`);
+    const original = btn.textContent;
+    btn.textContent = 'Copiado!';
+    btn.classList.add('btn-copiar--copiado');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('btn-copiar--copiado'); }, 1200);
   });
 
-  // Botões exportar
-  document.querySelectorAll(`[data-aba-export="${aba}"]`).forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tipo = btn.getAttribute('data-exportar');
-      if (tipo === 'csv') exportarCSV(aba);
-      else window.print();
-    });
+  document.getElementById(`copiar-email-${sufixo}`).addEventListener('click', () => {
+    const ta = document.getElementById(`saida-email-${sufixo}`);
+    ta.select(); document.execCommand('copy');
+    const btn = document.getElementById(`copiar-email-${sufixo}`);
+    const original = btn.textContent;
+    btn.textContent = 'Copiado!';
+    btn.classList.add('btn-copiar--copiado');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('btn-copiar--copiado'); }, 1200);
   });
+
+  document.getElementById(`csv-${sufixo}`).addEventListener('click', () => exportarCSV(aba));
+  document.getElementById(`pdf-${sufixo}`).addEventListener('click', () => window.print());
 }
 
 /* ================================================================
@@ -917,7 +923,7 @@ function exportarCSV(aba) {
 }
 
 /* ================================================================
-   ABAS
+   CONTROLE DE ABAS
    ================================================================ */
 function configurarAbas() {
   document.querySelectorAll('.menu-abas__botao').forEach(btn => {
@@ -945,7 +951,9 @@ document.addEventListener('DOMContentLoaded', () => {
   configurarEventos('deputados');
   configurarEventos('senadores');
 
-  // Carrega as duas abas (a de senadores em segundo plano)
   carregarAba('deputados');
   carregarAba('senadores');
 });
+</script>
+</body>
+</html>
