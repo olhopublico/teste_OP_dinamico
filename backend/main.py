@@ -53,3 +53,24 @@ async def get_senadores():
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao buscar Senado: {str(e)}")
     return _cache_senadores
+    
+    
+    
+    from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+# Lista de origens permitidas
+origins = [
+    "https://teste_OP_dinamico.github.io",  # ← SUBSTITUA pelo seu link do GitHub Pages
+    "http://localhost:5500",           # Para testes locais (opcional)
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,       # Permite as origens listadas
+    allow_credentials=True,
+    allow_methods=["*"],         # Permite todos os métodos (GET, POST, etc.)
+    allow_headers=["*"],         # Permite todos os cabeçalhos
+)
