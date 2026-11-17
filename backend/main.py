@@ -9,7 +9,8 @@ app = FastAPI(title="API Congresso Nacional")
 # Substitua pela URL real do seu GitHub Pages
 # ============================================================
 origins = [
-    "https://olhopublico.github.io/teste_OP_dinamico",   # ← troque pelo seu usuário
+    "https://olhopublico.github.io",
+    "https://olhopublico.github.io/teste_OP_dinamico",    # ← troque pelo seu usuário
     "http://localhost:5500",
     "http://localhost:3000",
 ]
