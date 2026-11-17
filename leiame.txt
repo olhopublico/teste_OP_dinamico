@@ -1,0 +1,16 @@
+Arquivo						Função
+index.html					Interface de frontend, carrega dados da Câmara/Senado e busca redes sociais em data/redes_sociais.json
+data/redes_sociais.json		Dados de redes sociais processados do TSE, estruturados como { "nome_normalizado": { instagram, facebook, tiktok, ... } }
+scripts/processar_tse.py	Executado manualmente ou agendado, baixa redes_sociais_de_candidatos.zip do portal de dados abertos do TSE, extrai, converte e gera JSON
+data/README.txt				Registra a data de atualização dos dados e os campos de origem
+
+
+site-congresso/
+├── index.html                 # Página principal (frontend)
+├── data/
+│   ├── redes_sociais.json     # Dados de redes sociais processados do TSE (gerado por script)
+│   └── README.txt             # Descrição dos campos e instruções de atualização
+├── scripts/
+│   └── processar_tse.py       # Script Python: baixa CSV do TSE → gera redes_sociais.json
+└── assets/
+    └── (opcional: ícones, imagens)

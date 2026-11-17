@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa · Congresso Nacional</title>
+    <meta name="description" content="Pesquise contatos de deputados federais e senadores. Dados públicos para participação popular.">
+    <meta name="keywords" content="deputados federais, senadores, redes sociais, Congresso Nacional, dados abertos, participação popular">
+    <style>
+        /* ===== RESET E VARIÁVEIS ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        :root {
+            --bg: #f0f7ff; --surface: #ffffff; --text: #1e293b; --text-muted: #64748b;
+            --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe;
+            --border: #cbd5e1; --shadow: 0 2px 12px rgba(59,130,246,0.08); --radius: 12px;
+        }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; line-height: 1.5; }
+        .container { max-width: 1300px; margin: 0 auto; }
+
+        /* ===== CABEÇALHO ===== */
+        header { background: var(--surface); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        header h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        header h2 { font-size: 1rem; font-weight: 400; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+        /* ===== ABAS ===== */
+        .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: var(--surface); border-radius: var(--radius); padding: 6px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 14px 24px; border: none; background: transparent; color: var(--text-muted); font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .tab-btn:hover { background: var(--primary-light); color: var(--primary); }
+        .tab-btn.active { background: var(--primary); color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ===== BLOCOS ===== */
+        .block { background: var(--surface); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .block-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 600; margin-bottom: 16px; }
+
+        /* ===== FILTROS ===== */
+        .filters-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .filter-group { flex: 1; min-width: 140px; }
+        .filter-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+        .filter-group input, .filter-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none; }
+        .filter-group input:focus, .filter-group select:focus { border-color: var(--primary); }
+        .filter-group select[multiple] { height: 80px; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; min-width: 160px; }
+        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+        .clear-btn { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; margin-top: 8px; }
+        .clear-btn:hover { color: var(--primary); }
+
+        /* ===== AGREGAÇÃO ===== */
+        .aggregation-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .aggregation-row { grid-template-columns: 1fr; } }
+        .agg-field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+        .agg-textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; font-family: monospace; background: var(--bg); color: var(--text); resize: vertical; }
+        .copy-btn { margin-top: 8px; padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        .copy-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+        .social-checkboxes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .social-checkboxes label { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; cursor: pointer; }
+
+        /* ===== RESULTADO ===== */
+        .result-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .result-count { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+        .export-btns { display: flex; gap: 8px; }
+        .export-btn { padding: 8px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .export-btn:hover { background: var(--primary-hover); }
+        .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; max-height: 420px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 1100px; }
+        thead { position: sticky; top: 0; z-index: 2; }
+        th { background: var(--primary-light); color: var(--primary); padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; border-bottom: 2px solid var(--primary); }
+        td { padding: 8px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+        tr:hover td { background: var(--bg); }
+        .foto-cell img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+        .name-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .name-link:hover { text-decoration: underline; }
+        .suplente-badge { font-size: 0.65rem; color: var(--text-muted); margin-left: 2px; }
+        .social-icon { font-size: 0.7rem; color: var(--primary); text-decoration: none; }
+        .social-icon:hover { text-decoration: underline; }
+        .empty-result { text-align: center; padding: 40px; color: var(--text-muted); font-style: italic; }
+        .loading-msg { text-align: center; padding: 40px; color: var(--primary); font-weight: 600; }
+        .loading-msg::after { content: '...'; animation: dots 1s steps(4, end) infinite; }
+        @keyframes dots { 0%,20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%,100% { content: '...'; } }
+        .error-msg { text-align: center; padding: 20px; color: #dc2626; background: #fef2f2; border-radius: 8px; }
+        .warning-msg { text-align: center; padding: 12px; color: #d97706; background: #fffbeb; border-radius: 8px; margin-bottom: 12px; font-size: 0.8rem; }
+
+        /* ===== RODAPÉ ===== */
+        footer { background: var(--surface); border-radius: var(--radius); padding: 24px 28px; margin-top: 24px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; }
+        .footer-left { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
+        .footer-left strong { color: var(--text); }
+        .footer-right { text-align: right; font-size: 0.75rem; color: var(--text-muted); }
+        .visit-counter { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; opacity: 0.7; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; } header h1 { font-size: 1.3rem; } header h2 { font-size: 0.85rem; }
+            .tab-btn { padding: 10px 16px; font-size: 0.85rem; } .block { padding: 16px; }
+            .filter-group { min-width: 100%; } footer { flex-direction: column; align-items: flex-start; } .footer-right { text-align: left; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pesquisa · Congresso Nacional</h1>
+            <h2>“E aí, já cobrou o congresso hoje?”</h2>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="camara">Câmara dos Deputados</button>
+            <button class="tab-btn" data-tab="senado">Senado</button>
+        </div>
+
+        <!-- ===== ABA CÂMARA ===== -->
+        <div class="tab-content active" id="tab-camara">
+            <div id="warning-camara"></div>
+
+            <div class="block">
+                <div class="block-title">Faça sua pesquisa</div>
+                <div class="filters-row" id="filters-camara">
+                    <div class="filter-group"><label>Nome</label><input type="text" id="filtro-nome-camara" placeholder="Digite um nome..."></div>
+                    <div class="filter-group"><label>Partido</label><select id="filtro-partido-camara" multiple></select></div>
+                    <div class="filter-group"><label>Estado</label><select id="filtro-estado-camara"><option value="">Todos</option></select></div>
+                    <div class="filter-group"><label>Rede social</label><select id="filtro-rede-camara"><option value="">Todas</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="whatsapp">WhatsApp</option><option value="site">Site</option></select></div>
+                    <div class="checkbox-group"><input type="checkbox" id="filtro-mandato-camara"><label for="filtro-mandato-camara">Possui mandato em 2026</label></div>
+                </div>
+                <button class="clear-btn" id="limpar-camara">Limpar filtros</button>
+            </div>
+
+            <div class="block">
+                <div class="aggregation-row">
+                    <div class="agg-field">
+                        <label>Usuários (redes sociais)</label>
+                        <div class="social-checkboxes" id="social-check-camara">
+                            <label><input type="checkbox" value="instagram" checked> Instagram</label>
+                            <label><input type="checkbox" value="facebook" checked> Facebook</label>
+                            <label><input type="checkbox" value="tiktok" checked> TikTok</label>
+                            <label><input type="checkbox" value="whatsapp" checked> WhatsApp</label>
+                        </div>
+                        <textarea class="agg-textarea" id="usuarios-camara" readonly placeholder="Carregando..."></textarea>
+                        <button class="copy-btn" id="copy-usuarios-camara">Copiar usuários</button>
+                    </div>
+                    <div class="agg-field">
+                        <label>E-mail Institucional</label>
+                        <textarea class="agg-textarea" id="emails-camara" readonly placeholder="Carregando..."></textarea>
+                        <button class="copy-btn" id="copy-emails-camara">Copiar e-mails</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="block">
+                <div class="result-header">
+                    <span class="result-count" id="count-camara">Carregando...</span>
+                    <div class="export-btns">
+                        <button class="export-btn" onclick="exportCSV('camara')">Exportar CSV</button>
+                        <button class="export-btn" onclick="exportPDF()">Exportar PDF</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="table-camara">
+                        <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
+                        <tbody id="tbody-camara"><tr><td colspan="11" class="loading-msg">Buscando dados da Câmara</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ABA SENADO ===== -->
+        <div class="tab-content" id="tab-senado">
+            <div id="warning-senado"></div>
+
+            <div class="block">
+                <div class="block-title">Faça sua pesquisa</div>
+                <div class="filters-row" id="filters-senado">
+                    <div class="filter-group"><label>Nome</label><input type="text" id="filtro-nome-senado" placeholder="Digite um nome..."></div>
+                    <div class="filter-group"><label>Partido</label><select id="filtro-partido-senado" multiple></select></div>
+                    <div class="filter-group"><label>Estado</label><select id="filtro-estado-senado"><option value="">Todos</option></select></div>
+                    <div class="filter-group"><label>Rede social</label><select id="filtro-rede-senado"><option value="">Todas</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="whatsapp">WhatsApp</option><option value="site">Site</option></select></div>
+                    <div class="checkbox-group"><input type="checkbox" id="filtro-mandato-senado"><label for="filtro-mandato-senado">Possui mandato em 2026</label></div>
+                </div>
+                <button class="clear-btn" id="limpar-senado">Limpar filtros</button>
+            </div>
+
+            <div class="block">
+                <div class="aggregation-row">
+                    <div class="agg-field">
+                        <label>Usuários (redes sociais)</label>
+                        <div class="social-checkboxes" id="social-check-senado">
+                            <label><input type="checkbox" value="instagram" checked> Instagram</label>
+                            <label><input type="checkbox" value="facebook" checked> Facebook</label>
+                            <label><input type="checkbox" value="tiktok" checked> TikTok</label>
+                            <label><input type="checkbox" value="whatsapp" checked> WhatsApp</label>
+                        </div>
+                        <textarea class="agg-textarea" id="usuarios-senado" readonly placeholder="Carregando..."></textarea>
+                        <button class="copy-btn" id="copy-usuarios-senado">Copiar usuários</button>
+                    </div>
+                    <div class="agg-field">
+                        <label>E-mail Institucional</label>
+                        <textarea class="agg-textarea" id="emails-senado" readonly placeholder="Carregando..."></textarea>
+                        <button class="copy-btn" id="copy-emails-senado">Copiar e-mails</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="block">
+                <div class="result-header">
+                    <span class="result-count" id="count-senado">Carregando...</span>
+                    <div class="export-btns">
+                        <button class="export-btn" onclick="exportCSV('senado')">Exportar CSV</button>
+                        <button class="export-btn" onclick="exportPDF()">Exportar PDF</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="table-senado">
+                        <thead><tr><th>Foto</th><th>Nome</th><th>Partido</th><th>Estado</th><th>Instagram</th><th>Facebook</th><th>TikTok</th><th>WhatsApp</th><th>Site</th><th>Telefone</th><th>E-mail</th></tr></thead>
+                        <tbody id="tbody-senado"><tr><td colspan="11" class="loading-msg">Buscando dados do Senado</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-left">
+                <strong>Legenda:</strong><br>* Suplente. Assume mandato em 2027<br>** Aguardando decisão do TSE<br>
+                <span style="display:block; margin-top:6px;">Plataforma de consulta a dados públicos de parlamentares, voltada ao fortalecimento da participação popular.</span>
+            </div>
+            <div class="footer-right">Site em construção. Novidades em breve<br><span class="visit-counter" id="visit-counter">2701</span></div>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================================
+        // ESTADO GLOBAL
+        // ============================================================
+        let camaraData = [];
+        let senadoData = [];
+        let redesTSE = {};  // { "NOME NORMALIZADO": { instagram, facebook, tiktok, whatsapp } }
+        const UFs = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        async function fetchJSON(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+        }
+
+        // Normaliza nome para matching (equivalente ao Python do script)
+        function normalizarNome(nome) {
+            if (!nome) return '';
+            return nome
+                .toUpperCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        // ============================================================
+        // CARREGAR REDES SOCIAIS DO TSE (JSON local)
+        // ============================================================
+        async function carregarRedesTSE() {
+            try {
+                const resp = await fetch('data/redes_sociais.json');
+                if (!resp.ok) throw new Error('JSON não encontrado');
+                redesTSE = await resp.json();
+                console.log(`Redes TSE carregadas: ${Object.keys(redesTSE).length} entradas`);
+            } catch (err) {
+                console.warn('Redes sociais do TSE não disponíveis:', err.message);
+                redesTSE = {};
+                // Exibe aviso discreto nas duas abas
+                document.getElementById('warning-camara').innerHTML =
+                    '<div class="warning-msg">⚠️ Dados de redes sociais do TSE não carregados. Exibindo apenas o que as APIs legislativas retornam.</div>';
+                document.getElementById('warning-senado').innerHTML =
+                    '<div class="warning-msg">⚠️ Dados de redes sociais do TSE não carregados. Exibindo apenas o que as APIs legislativas retornam.</div>';
+            }
+        }
+
+        // ============================================================
+        // MESCLAR REDES DO TSE COM DADOS LEGISLATIVOS
+        // ============================================================
+        function mesclarRedes(parlamentar) {
+            const chave = normalizarNome(parlamentar.nome);
+            const redes = redesTSE[chave];
+            if (!redes) return parlamentar;
+
+            return {
+                ...parlamentar,
+                instagram: parlamentar.instagram || redes.instagram || '',
+                facebook:  parlamentar.facebook  || redes.facebook  || '',
+                tiktok:    parlamentar.tiktok    || redes.tiktok    || '',
+                whatsapp:  parlamentar.whatsapp  || redes.whatsapp  || '',
+            };
+        }
+
+        // ============================================================
+        // CARREGAR DEPUTADOS (API DA CÂMARA)
+        // ============================================================
+        async function carregarCamara() {
+            const tbody = document.getElementById('tbody-camara');
+            const countEl = document.getElementById('count-camara');
+            try {
+                const data = await fetchJSON('https://dadosabertos.camara.leg.br/api/v2/deputados?ordem=ASC&ordenarPor=nome&itens=100');
+                const lista = data.dados || [];
+
+                const detalhes = await Promise.all(
+                    lista.map(async (d) => {
+                        try {
+                            const det = await fetchJSON(`https://dadosabertos.camara.leg.br/api/v2/deputados/${d.id}`);
+                            const info = det.dados || {};
+                            const gab = info.gabinete || {};
+                            const redesApi = info.rede_social || [];
+
+                            const getRede = (dominio) => {
+                                const link = redesApi.find(u => u.includes(dominio));
+                                if (!link) return '';
+                                if (dominio === 'instagram.com' || dominio === 'facebook.com' || dominio === 'tiktok.com') {
+                                    const parts = link.split('/').filter(Boolean);
+                                    return '@' + parts[parts.length - 1].replace('@','');
+                                }
+                                return link;
+                            };
+
+                            return mesclarRedes({
+                                id: d.id,
+                                nome: d.nome,
+                                partido: d.siglaPartido,
+                                estado: d.siglaUf,
+                                foto: d.urlFoto || '',
+                                siteOficial: `https://www.camara.leg.br/deputados/${d.id}`,
+                                instagram: getRede('instagram.com'),
+                                facebook: getRede('facebook.com'),
+                                tiktok: getRede('tiktok.com'),
+                                whatsapp: '',
+                                site: '',
+                                telefone: gab.telefone || '',
+                                email: info.email || '',
+                                mandato2026: true,
+                                suplente: false
+                            });
+                        } catch {
+                            return mesclarRedes({
+                                id: d.id, nome: d.nome, partido: d.siglaPartido, estado: d.siglaUf,
+                                foto: d.urlFoto || '', siteOficial: `https://www.camara.leg.br/deputados/${d.id}`,
+                                instagram: '', facebook: '', tiktok: '', whatsapp: '', site: '',
+                                telefone: '', email: '', mandato2026: true, suplente: false
+                            });
+                        }
+                    })
+                );
+
+                camaraData = detalhes;
+                countEl.textContent = `${camaraData.length} de ${camaraData.length}`;
+                popularFiltros('camara');
+                renderTable('camara');
+            } catch (err) {
+                console.error('Erro Câmara:', err);
+                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados da Câmara. Verifique sua conexão ou tente novamente mais tarde. (${err.message})</td></tr>`;
+                countEl.textContent = 'Erro';
+            }
+        }
+
+        // ============================================================
+        // CARREGAR SENADORES (API DO SENADO)
+        // ============================================================
+        async function carregarSenado() {
+            const tbody = document.getElementById('tbody-senado');
+            const countEl = document.getElementById('count-senado');
+            try {
+                const data = await fetchJSON('https://legis.senado.leg.br/dadosabertos/senador/lista/atual');
+                const parlamentares = data?.ListaParlamentarEmExercicio?.Parlamentares?.Parlamentar || [];
+                const lista = Array.isArray(parlamentares) ? parlamentares : [parlamentares];
+
+                const detalhes = await Promise.all(
+                    lista.map(async (p) => {
+                        const id = p.IdentificacaoParlamentar?.CodigoParlamentar;
+                        const nome = p.IdentificacaoParlamentar?.NomeParlamentar || '';
+                        const partido = p.IdentificacaoParlamentar?.SiglaPartidoParlamentar || '';
+                        const estado = p.IdentificacaoParlamentar?.UfParlamentar || '';
+                        const foto = p.IdentificacaoParlamentar?.UrlFotoParlamentar || '';
+                        const email = p.IdentificacaoParlamentar?.EmailParlamentar || '';
+
+                        let telefone = '';
+                        if (id) {
+                            try {
+                                const det = await fetchJSON(`https://legis.senado.leg.br/dadosabertos/senador/${id}`);
+                                const detInfo = det?.DetalheParlamentar?.Parlamentar;
+                                telefone = detInfo?.TelefoneParlamentar || '';
+                            } catch { /* ignora */ }
+                        }
+
+                        return mesclarRedes({
+                            id: id, nome, partido, estado, foto,
+                            siteOficial: id ? `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}` : '',
+                            instagram: '', facebook: '', tiktok: '', whatsapp: '', site: '',
+                            telefone, email,
+                            mandato2026: true, suplente: false
+                        });
+                    })
+                );
+
+                senadoData = detalhes;
+                countEl.textContent = `${senadoData.length} de ${senadoData.length}`;
+                popularFiltros('senado');
+                renderTable('senado');
+            } catch (err) {
+                console.error('Erro Senado:', err);
+                tbody.innerHTML = `<tr><td colspan="11" class="error-msg">Não foi possível carregar os dados do Senado. A API pode estar indisponível ou bloqueando requisições do navegador (CORS). (${err.message})</td></tr>`;
+                countEl.textContent = 'Erro';
+            }
+        }
+
+        // ============================================================
+        // POPULAR FILTROS
+        // ============================================================
+        function popularFiltros(prefix) {
+            const data = prefix === 'camara' ? camaraData : senadoData;
+            if (!data.length) return;
+
+            const partidoSelect = document.getElementById(`filtro-partido-${prefix}`);
+            const estadoSelect = document.getElementById(`filtro-estado-${prefix}`);
+
+            const partidos = [...new Set(data.map(d => d.partido))].sort();
+            partidoSelect.innerHTML = partidos.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            estadoSelect.innerHTML = '<option value="">Todos</option>' +
+                UFs.map(uf => `<option value="${uf}">${uf}</option>`).join('');
+        }
+
+        // ============================================================
+        // FILTRAR DADOS
+        // ============================================================
+        function getFilteredData(prefix) {
+            const data = prefix === 'camara' ? camaraData : senadoData;
+            if (!data.length) return [];
+
+            const nome = document.getElementById(`filtro-nome-${prefix}`).value.toLowerCase();
+            const partidoSelect = document.getElementById(`filtro-partido-${prefix}`);
+            const partidosSelecionados = Array.from(partidoSelect.selectedOptions).map(o => o.value);
+            const estado = document.getElementById(`filtro-estado-${prefix}`).value;
+            const rede = document.getElementById(`filtro-rede-${prefix}`).value;
+            const mandato = document.getElementById(`filtro-mandato-${prefix}`).checked;
+
+            return data.filter(d => {
+                if (nome && !d.nome.toLowerCase().includes(nome)) return false;
+                if (partidosSelecionados.length > 0 && !partidosSelecionados.includes(d.partido)) return false;
+                if (estado && d.estado !== estado) return false;
+                if (rede && !d[rede]) return false;
+                if (mandato && !d.mandato2026) return false;
+                return true;
+            });
+        }
+
+        // ============================================================
+        // RENDERIZAR TABELA
+        // ============================================================
+        function renderTable(prefix) {
+            const data = prefix === 'camara' ? camaraData : senadoData;
+            const filtered = getFilteredData(prefix);
+            const tbody = document.getElementById(`tbody-${prefix}`);
+            const countEl = document.getElementById(`count-${prefix}`);
+
+            if (!data.length) return;
+
+            countEl.textContent = `${filtered.length} de ${data.length}`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="empty-result">Nenhum resultado encontrado.</td></tr>';
+                updateAggregation(prefix, []);
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(d => {
+                const suplenteMark = d.suplente ? ' <span class="suplente-badge">*</span>' : '';
+                const nomeCell = d.siteOficial
+                    ? `<a href="${d.siteOficial}" target="_blank" class="name-link">${d.nome}</a>${suplenteMark}`
+                    : `${d.nome}${suplenteMark}`;
+
+                const fotoCell = d.foto
+                    ? `<img src="${d.foto}" alt="${d.nome}" onerror="this.style.display='none'">`
+                    : '<span style="color:var(--text-muted); font-size:0.7rem;">—</span>';
+
+                const socialLink = (user, rede) => {
+                    if (!user) return '—';
+                    let url = '';
+                    if (rede === 'instagram') url = `https://instagram.com/${user.replace('@','')}`;
+                    else if (rede === 'facebook') url = `https://facebook.com/${user.replace('@','')}`;
+                    else if (rede === 'tiktok') url = `https://tiktok.com/@${user.replace('@','')}`;
+                    else if (rede === 'whatsapp') url = `https://wa.me/${user}`;
+                    const display = user.startsWith('@') ? user : (rede === 'whatsapp' ? user : '@' + user);
+                    return `<a href="${url}" target="_blank" class="social-icon">${display}</a>`;
+                };
+
+                const siteCell = d.site ? `<a href="${d.site}" target="_blank" class="social-icon">Link</a>` : '—';
+
+                return `<tr>
+                    <td class="foto-cell">${fotoCell}</td>
+                    <td>${nomeCell}</td>
+                    <td>${d.partido}</td>
+                    <td>${d.estado}</td>
+                    <td>${socialLink(d.instagram, 'instagram')}</td>
+                    <td>${socialLink(d.facebook, 'facebook')}</td>
+                    <td>${socialLink(d.tiktok, 'tiktok')}</td>
+                    <td>${socialLink(d.whatsapp, 'whatsapp')}</td>
+                    <td>${siteCell}</td>
+                    <td>${d.telefone || '—'}</td>
+                    <td>${d.email || '—'}</td>
+                </tr>`;
+            }).join('');
+
+            updateAggregation(prefix, filtered);
+        }
+
+        // ============================================================
+        // ATUALIZAR AGREGAÇÃO
+        // ============================================================
+        function updateAggregation(prefix, filtered) {
+            const socialChecks = document.querySelectorAll(`#social-check-${prefix} input:checked`);
+            const redesSelecionadas = Array.from(socialChecks).map(c => c.value);
+
+            let usuarios = [];
+            filtered.forEach(d => {
+                redesSelecionadas.forEach(rede => {
+                    if (d[rede]) {
+                        let user = d[rede];
+                        if ((rede === 'instagram' || rede === 'facebook' || rede === 'tiktok') && !user.startsWith('@')) {
+                            user = '@' + user;
+                        }
+                        usuarios.push(user);
+                    }
+                });
+            });
+            document.getElementById(`usuarios-${prefix}`).value = usuarios.join(' ');
+
+            const emails = filtered.map(d => d.email).filter(e => e);
+            document.getElementById(`emails-${prefix}`).value = emails.join('; ');
+        }
+
+        // ============================================================
+        // EVENTOS DE FILTRO
+        // ============================================================
+        function setupFilterEvents(prefix) {
+            ['nome','partido','estado','rede','mandato'].forEach(id => {
+                const el = document.getElementById(`filtro-${id}-${prefix}`);
+                if (el) el.addEventListener(id === 'nome' ? 'input' : 'change', () => renderTable(prefix));
+            });
+
+            document.querySelectorAll(`#social-check-${prefix} input`).forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const filtered = getFilteredData(prefix);
+                    updateAggregation(prefix, filtered);
+                });
+            });
+
+            document.getElementById(`limpar-${prefix}`).addEventListener('click', () => {
+                document.getElementById(`filtro-nome-${prefix}`).value = '';
+                document.getElementById(`filtro-partido-${prefix}`).selectedIndex = -1;
+                document.getElementById(`filtro-estado-${prefix}`).value = '';
+                document.getElementById(`filtro-rede-${prefix}`).value = '';
+                document.getElementById(`filtro-mandato-${prefix}`).checked = false;
+                renderTable(prefix);
+            });
+
+            document.getElementById(`copy-usuarios-${prefix}`).addEventListener('click', () => {
+                const ta = document.getElementById(`usuarios-${prefix}`);
+                ta.select(); document.execCommand('copy');
+                alert('Usuários copiados!');
+            });
+
+            document.getElementById(`copy-emails-${prefix}`).addEventListener('click', () => {
+                const ta = document.getElementById(`emails-${prefix}`);
+                ta.select(); document.execCommand('copy');
+                alert('E-mails copiados!');
+            });
+        }
+
+        // ============================================================
+        // EXPORTAR
+        // ============================================================
+        function exportCSV(prefix) {
+            const filtered = getFilteredData(prefix);
+            if (!filtered.length) { alert('Nenhum dado para exportar.'); return; }
+            const headers = ['Foto','Nome','Partido','Estado','Instagram','Facebook','TikTok','WhatsApp','Site','Telefone','E-mail'];
+            const rows = filtered.map(d => [
+                d.foto ? 'Com foto' : '', d.nome, d.partido, d.estado,
+                d.instagram, d.facebook, d.tiktok, d.whatsapp,
+                d.site, d.telefone, d.email
+            ]);
+            let csv = headers.join(',') + '\n';
+            rows.forEach(r => { csv += r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',') + '\n'; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `congresso_${prefix}.csv`;
+            link.click();
+        }
+
+        function exportPDF() { window.print(); }
+
+        // ============================================================
+        // CONTADOR DE VISITAS (simulado)
+        // ============================================================
+        function initVisitCounter() {
+            const key = 'congresso_visits';
+            let visits = localStorage.getItem(key);
+            visits = visits ? parseInt(visits) + 1 : 2701;
+            localStorage.setItem(key, visits);
+            document.getElementById('visit-counter').textContent = visits;
+        }
+
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            setupFilterEvents('camara');
+            setupFilterEvents('senado');
+            initVisitCounter();
+
+            // Abas
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+                });
+            });
+
+            // 1. Carrega redes sociais do TSE (não bloqueia se falhar)
+            await carregarRedesTSE();
+
+            // 2. Carrega dados dos parlamentares
+            carregarCamara();
+            carregarSenado();
+        });
+    </script>
+</body>
+</html>
