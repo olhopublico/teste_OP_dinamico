@@ -42,6 +42,12 @@ async def startup_event():
 # ============================================================
 # ROTAS
 # ============================================================
+
+    @app.get("/")
+def raiz():
+    return {"mensagem": "API está no ar. Acesse /docs para a documentação."}
+    
+    
 @app.get("/api/deputados")
 async def get_deputados():
     global _cache_deputados
@@ -65,3 +71,4 @@ async def get_senadores():
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao buscar Senado: {str(e)}")
     return _cache_senadores
+    
