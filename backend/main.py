@@ -6,11 +6,10 @@ app = FastAPI(title="API Congresso Nacional")
 
 # ============================================================
 # CORS: permite o GitHub Pages e testes locais
-# Substitua pela URL real do seu GitHub Pages
 # ============================================================
 origins = [
     "https://olhopublico.github.io",
-    "https://olhopublico.github.io/teste_OP_dinamico",    # ← troque pelo seu usuário
+    "https://olhopublico.github.io/teste_OP_dinamico",
     "http://localhost:5500",
     "http://localhost:3000",
 ]
@@ -40,15 +39,20 @@ async def startup_event():
     print(f"TSE carregado: {len(_redes_tse)} registros.")
 
 # ============================================================
-# ROTAS
+# ROTA RAIZ  ← FALTAVA ESTA ROTA
 # ============================================================
+@app.get("/")
+async def raiz():
+    return {
+        "mensagem": "API Congresso Nacional está no ar.",
+        "docs": "/docs",
+        "endpoints": ["/api/deputados", "/api/senadores"]
+    }
 
-    @app.get("/")
-def raiz():
-    return {"mensagem": "API está no ar. Acesse /docs para a documentação."}
-    
-    
-@app.get("/api/deputados")
+# ============================================================
+# ROTAS DE DADOS
+# ============================================================
+@app.get("/api/deputados")   # ← atenção: decorator SEM indentação
 async def get_deputados():
     global _cache_deputados
     if _cache_deputados is None:
@@ -71,4 +75,3 @@ async def get_senadores():
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Erro ao buscar Senado: {str(e)}")
     return _cache_senadores
-    
